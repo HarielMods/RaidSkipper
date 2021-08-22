@@ -43,7 +43,10 @@ local expansions = {
     },
     [3] = {
         label = "Battle for Azeroth",
-        raids = {}
+        raids = {
+            [1] = { label = "Battle of Dazar'alor", mythic = 316476 },
+            [2] = { label = "Ny'alotha, the Waking City", mythic = 58375, heroic = 58374, normal = 58373 },
+        }
     }
 }
 
@@ -55,10 +58,6 @@ local function raid_skipper(msg, editbox)
         for s in pairs(raids) do
             local skip = raids[s]
             local l,m,h,n = skip.label, is_complete(skip.mythic), is_complete(skip.heroic), is_complete(skip.normal)
-
-            -- print ("debug: " .. l .. " " .. m .. " " .. h .. " " .. n)
-            -- print ("debug: " .. l .. " " .. is_complete(m) .. " " .. is_complete(h) .. " " .. is_complete(n))
-
             print(
                 format("    %s: %s %s %s", l, 
                     make_color(m and "yellow" or "red", "Mythic"),
@@ -66,15 +65,6 @@ local function raid_skipper(msg, editbox)
                     not m and not h and make_color(n and "yellow" or "red", "Normal") or ""
                 )
             )
-
-
-            -- print_entry("  " .. l .. make_color("blue", " Mythic "), m)
-            -- if (not m) then
-            --     print_entry("  " .. l .. make_color("blue", " Heroic "), h)
-            --     if (not h) then
-            --         print_entry("  " .. l .. make_color("blue", " Normal "), n)
-            --     end
-            -- end
         end
     end
 end
