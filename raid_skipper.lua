@@ -50,23 +50,43 @@ local expansions = {
     }
 }
 
-local function raid_skipper(msg, editbox)
-    for e in pairs(expansions) do
-        local expansion = expansions[e]
-        local raids = expansion.raids
-        print(expansion.label)
-        for s in pairs(raids) do
-            local skip = raids[s]
-            local l,m,h,n = skip.label, is_complete(skip.mythic), is_complete(skip.heroic), is_complete(skip.normal)
-            print(
-                format("    %s: %s %s %s", l, 
-                    make_color(m and "yellow" or "red", "Mythic"),
-                    not m and make_color(h and "yellow" or "red", "Heroic") or "",
-                    not m and not h and make_color(n and "yellow" or "red", "Normal") or ""
+local function help() {
+    print("/rs or /raidskipper")
+    print("/rs Warlords - Display only Warlords raids")
+    print("/rs Legion - Display only Legion raids")
+    print("/rs BfA - Display only Battle for Azeroth raids")
+    print("/rs Shadowlands - Display only Shadowlands raids")
+    print("/ic or /iscomplete")
+    print("/ic 43256 - Shows if player has completed quest or achievement 43256")
+
+}
+
+local function raid_skipper(msg)
+
+    if (string.len(msg) > 0) then
+        -- /rs expansion, raid, help, 
+        if (msg == "help") then
+        end
+    else
+        for e in pairs(expansions) do
+            local expansion = expansions[e]
+            local raids = expansion.raids
+            print(expansion.label)
+            for s in pairs(raids) do
+                local skip = raids[s]
+                local l,m,h,n = skip.label, is_complete(skip.mythic), is_complete(skip.heroic), is_complete(skip.normal)
+                print(
+                    format("    %s: %s %s %s", l, 
+                        make_color(m and "yellow" or "red", "Mythic"),
+                        not m and make_color(h and "yellow" or "red", "Heroic") or "",
+                        not m and not h and make_color(n and "yellow" or "red", "Normal") or ""
+                    )
                 )
-            )
+            end
         end
     end
+
+    
 end
 
 SLASH_RAIDSKIPPER1, SLASH_RAIDSKIPPER2 = "/raidskipper", "/rs"
