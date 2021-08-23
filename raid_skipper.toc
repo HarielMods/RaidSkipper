@@ -1,0 +1,8 @@
+## Interface: 90000
+## Author: Hariel
+## Title: Raid Skipper
+## Notes: Show which raid content player can skip
+## Version: 1.0.0
+## LoadOnDemand: 1
+
+raid_skipper.lua
