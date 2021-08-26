@@ -11,6 +11,7 @@ local function text_color(color, msg)
     local colors = {
         ["yellow"] = "ffffff00",
         ["red"] = "ffff0000",
+        ["green"] = "ff00ff00",
         ["blue"] = "ff0000ff",
     }
     return "\124c" .. colors[color] .. msg .. "\124r"
@@ -25,6 +26,8 @@ local function print_entry(label, value)
     end
     print(format("%s: %s", label, v))
 end
+
+local div = "------------------------------"
 
 local data = {
     [1] = { 
@@ -62,7 +65,7 @@ local data = {
 local function get_skip_text(id, label)
     if (id ~= nil) then
         local is_quest_complete = is_complete(id)
-        return text_color(is_quest_complete and "yellow" or "red", label)
+        return text_color(is_quest_complete and "green" or "red", label)
     else
         return ""
     end
@@ -84,11 +87,31 @@ local function show_expansion(expansion)
     end
 end
 
+local function print_key()
+    print("Key: " .. text_color("green", "Completed") .. " " .. text_color("red", "Not completed"))
+end
+
+local function print_help()
+    print("Raid Skipper Help")
+    print("  Usage: /raidskipper or /rs")
+    print(" ")
+    print("  For single expansions use:")
+    print("    /rs wod")
+    print("    /rs legion")
+    print("    /rs bfa")
+    print("    /rs sl")
+    print("  Completed is " .. text_color("green", "green"))
+    print("  Not completed is " .. text_color("red", "red"))
+end
+
 local function RaidSkipperHandler(msg)
     local expansions = data
     if (string.len(msg) > 0) then
         local m = string.lower(msg)
-        if (m == "wod" or m == "1") then 
+        if (m == "help") then
+            print_help()
+            do return end
+        elseif (m == "wod" or m == "1") then 
             expansions = { [1] = data[1] }
         elseif (m == "legion" or m == "2") then
             expansions = { [1] = data[2] }
@@ -98,13 +121,11 @@ local function RaidSkipperHandler(msg)
             expansions = { [1] = data[4] }
         end
     end
-    
 
-    print("--------------------")
+    print_key()
     for _, expansion in ipairs(expansions) do
         show_expansion(expansion)
     end
-    print("--------------------")
 
 end
 

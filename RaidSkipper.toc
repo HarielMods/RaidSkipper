@@ -1,4 +1,4 @@
-## Interface: 90000
+## Interface: 90100
 ## Author: Hariel
 ## Title: Raid Skipper
 ## Notes: Show which raid content player can skip
