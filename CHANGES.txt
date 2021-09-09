@@ -1,0 +1,10 @@
+lightweight tag a8e01305cc15e6f18a9b2783fedadda47a78301c 1.0.2
+Author:	Brendan Schulz <brendan.schulz@gmail.com>
+Date:	Wed Sep 1 18:02:01 2021 -0500
+
+commit a8e01305cc15e6f18a9b2783fedadda47a78301c
+Author: Brendan Schulz <brendan.schulz@gmail.com>
+Date:   Wed Sep 1 18:02:01 2021 -0500
+
+    Add Shadowlands raids and update formatting
+
