@@ -1,3 +1,6 @@
+### 1.0.3
+* Add Ace libraries
+
 ### 1.0.2
 * Added Shadowlands raids
 * Updated formatting
