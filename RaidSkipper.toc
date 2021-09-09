@@ -1,7 +1,8 @@
 ## Interface: 90100
-## Author: Hariel
 ## Title: Raid Skipper
 ## Notes: Show which raid content player can skip
-## Version: 1.0.2
+## Author: Hariel
+## Version: 1.0.3
 
+embeds.xml
 RaidSkipper.lua

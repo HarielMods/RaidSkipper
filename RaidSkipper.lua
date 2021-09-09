@@ -1,4 +1,11 @@
-local data = {
+------------------------------------------------------------
+--  Raid Skipper: Show what raid content can be skipped   --
+------------------------------------------------------------
+
+local _, RaidSkipper = ...;
+addon_name = "RaidSkipper";
+
+local raid_skip_quests = {
     [1] = { 
         name = "Warlords of Draenor",
         raids = {
@@ -13,7 +20,6 @@ local data = {
             [1] = { name = "The Emerald Nightmare", mythicId = 44285, heroicId = 44284, normalId = 44283 },
             [2] = { name = "The Nighthold", mythicId = 45383, heroicId = 45382, normalId = 45381 },
             [3] = { name = "Tomb of Sargeras", mythicId = 47727, heroicId = 47726, normalId = 47725 },
-
             [4] = { name = "Burning Throne Lower", mythicId = 49076, heroicId = 49075, normalId = 49032 },
             [5] = { name = "Burning Throne Upper", mythicId = 49135, heroicId = 49134, normalId = 49133 }
         }
@@ -34,22 +40,18 @@ local data = {
     }
 }
 
-local div = "------------------------------"
+RaidSkipper.AceAddon = LibStub("AceAddon-3.0"):NewAddon("RaidSkipper", "AceConsole-3.0");
 
-local function is_complete(id)
-    if (id ~= nil) then
-        return C_QuestLog.IsQuestFlaggedCompleted(id)
-    else
-        return nil
-    end
-end
+-- Workaround to keep the nice RaidSkipper:Print function.
+RaidSkipper.Print = function(self, text) RaidSkipper.AceAddon:Print(text) end
 
-local function is_in_progress(id)
-    local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(id, 1, false)
-end
+-- UTILITY FUNCTIONS
 
-local function text_color(color, msg)
+RaidSkipper.TextColor = function(color, msg)
     local colors = {
+        ["complete"] = "ff00ff00",
+        ["incomplete"] = "ffff0000",
+        ["inprogress"] = "ff00ffff",
         ["yellow"] = "ffffff00",
         ["red"] = "ffff0000",
         ["green"] = "ff00ff00",
@@ -58,100 +60,119 @@ local function text_color(color, msg)
     return "\124c" .. colors[color] .. msg .. "\124r"
 end
 
-local function print_entry(label, value)
-    local v
-    if (value) then
-        v = text_color("yellow", "Completed")
-    else 
-        v = text_color("red", "Not completed")
+-- QUEST FUNCTIONS
+
+local function IsComplete(id)
+    if (id ~= nil) then
+        return C_QuestLog.IsQuestFlaggedCompleted(id)
+    else
+        return nil
     end
-    print(format("%s: %s", label, v))
 end
 
-local function is_quest_in_quest_log(id)
+local function IsInProgress(id)
+    local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(id, 1, false)
+end
+
+local function IsQuestInQuestLog(id)
     return (C_QuestLog.GetLogIndexForQuestID(id) ~= nil)
 end
 
-local function get_progress(id)
+-- DISPLAY FUNCTIONS
+
+local function ShowQuestProgress(id)
     local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(id, 1, false)
     return fulfilled .. "/" .. required
 end
 
-local function get_quest_info(id, difficulty)
-    if (is_complete(id)) then
+local function ShowQuestInfo(id, difficulty)
+    if (IsComplete(id)) then
         -- Player has completed this quest
-        return text_color("green", difficulty)
-    elseif (is_quest_in_quest_log(id)) then
-            -- Player has this quest in the quest log
-            return text_color("blue", difficulty .. " " .. get_progress(id))
+        return RaidSkipper.TextColor("complete", difficulty)
+    elseif (IsQuestInQuestLog(id)) then
+        -- Player has this quest in their quest log
+        return RaidSkipper.TextColor("inprogress", difficulty .. " " .. ShowQuestProgress(id))
     else
         -- Player has not completed this quest does not have quest in the quest log
-        return text_color("red", difficulty)
+        return RaidSkipper.TextColor("incomplete", difficulty)
     end
 end
 
-local function show_expansion(expansion)
-    if (expansion ~= nil and #(expansion.raids) > 0) then
-        print (expansion.name)
-        for _, raid in ipairs(expansion.raids) do
-            local output = "   " .. raid.name .. ": "
-            output = output .. get_quest_info(raid.mythicId, "Mythic")
-
-            -- If mythic is completed, there is no need to find out if heroic or normal is completed
-            if (not is_complete(raid.mythicId) and raid.heroicId ~= nil) then    
-                output = output .. " " .. get_quest_info(raid.heroicId, "Heroic")
-                -- If heroic is completed, there is no need to find out if normal is completed
-                if (not is_complete(raid.heroicId) and raid.normalId ~= nil) then
-                    output = output .. " " .. get_quest_info(raid.normalId, "Normal")
-                end
-            end
-            print(output)
+local function ShowRaidSkip(raid)
+    local line = "  " .. raid.name .. ": "
+    
+    -- Mythic
+    line = line .. ShowQuestInfo(raid.mythicId, "Mythic")
+    
+    -- Heroic, if Mythic is complete Heroic and Normal can be skipped
+    if (not IsComplete(raid.mythicId) and raid.heroicId ~= nil) then
+        line = line .. " " .. ShowQuestInfo(raid.heroicId, "Heroic")
+        -- Normal, if Heroic is complete Normal can be skipped
+        if (not IsComplete(raid.heroicId) and raid.normalId ~= nil) then
+            line = line .. " " .. ShowQuestInfo(raid.normalId, "Normal")
         end
     end
+    
+    RaidSkipper:Print(line)
 end
 
-local function print_key()
-    print("Key: " .. text_color("blue", "In progress") .. " " .. text_color("green", "Completed") .. " " .. text_color("red", "Not completed"))
-    print("Use '/rs help' to display more help")
+local function ShowExpansion(data)
+    
+    RaidSkipper:Print(data.name)
+
+    for key, raid in pairs(data.raids) do
+        ShowRaidSkip(raid)
+    end
 end
 
-local function print_help()
-    print(text_color("green", "Raid Skipper:") .. " Arguments to /rs :")
-    print("   wod - Warlords of Draenor")
-    print("   legion - Legion")
-    print("   bfa - Battle for Azeroth")
-    print("   sl - Shadowlands")
-    print("Color Key:")
-    print(text_color("blue", "   Blue") .. ": In progress")
-    print(text_color("green", "   Green") .. ": Completed")
-    print(text_color("red", "   Red") .. ": Not completed")
-    print("Lower difficulties can be skipped if a higher difficulty skip is completed.")
+local function ShowExpansions()
+    for name, data in pairs(raid_skip_quests) do
+        ShowExpansion(data)
+    end
 end
 
-local function RaidSkipperHandler(msg)
-    local expansions = data
-    if (string.len(msg) > 0) then
-        local m = string.lower(msg)
-        if (m == "help") then
-            print_help()
-            do return end
-        elseif (m == "wod" or m == "1") then 
-            expansions = { [1] = data[1] }
-        elseif (m == "legion" or m == "2") then
-            expansions = { [1] = data[2] }
-        elseif (m == "bfa" or m == "3") then
-            expansions = { [1] = data[3] }
-        elseif (m == "sl" or m == "4") then
-            expansions = { [1] = data[4] }
+local function ShowKey()
+    Print("Key: " .. TextColor("blue", "In progress") .. " " .. TextColor("green", "Completed") .. " " .. TextColor("red", "Not completed"))
+    Print("Use '/rs help' to display more help")
+end
+
+local function PrintHelp()
+    RaidSkipper:Print("slash commands:")
+    RaidSkipper:Print("  /rs wod --> Warlords of Draenor")
+    RaidSkipper:Print("  /rs legion --> Legion")
+    RaidSkipper:Print("  /rs bfa --> Battle for Azeroth")
+    RaidSkipper:Print("  /rs sl --> Shadowlands")
+end
+
+function SlashHandler(args)
+    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
+
+    if arg1 then
+        arg1 = arg1:lower()
+        
+        if arg1 == "wod" then
+            ShowExpansion(raid_skip_quests[1])
+        elseif arg1 == "legion" then
+            ShowExpansion(raid_skip_quests[2])
+        elseif arg1 == "bfa" then
+            ShowExpansion(raid_skip_quests[3])
+        elseif arg1 == "sl" then
+            ShowExpansion(raid_skip_quests[4])
+        elseif arg1 == "help" then
+            PrintHelp()
         end
-    end
-
-    print(text_color("yellow", "== Raid Skipper =="))
-    for _, expansion in ipairs(expansions) do
-        show_expansion(expansion)
+    else
+        ShowExpansions()
     end
 end
 
-SLASH_RAIDSKIPPER1, SLASH_RAIDSKIPPER2 = "/raidskipper", "/rs"
-SlashCmdList["RAIDSKIPPER"] = RaidSkipperHandler
+function RaidSkipper.AceAddon:OnInitialize()
+    self:Print("Raid Skipper Initialized");
 
+    self:RegisterChatCommand("raidskipper", SlashHandler);
+    self:RegisterChatCommand("rs", SlashHandler);
+
+end
+
+function RaidSkipper.AceAddon:OnEnable()
+end
