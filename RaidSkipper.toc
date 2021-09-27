@@ -2,7 +2,7 @@
 ## Title: Raid Skipper
 ## Notes: Show which raid content player can skip
 ## Author: Hariel
-## Version: 1.0.3
+## Version: 1.0.4
 
 embeds.xml
 RaidSkipper.lua
