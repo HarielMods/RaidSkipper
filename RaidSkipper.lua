@@ -6,41 +6,43 @@ local _, RaidSkipper = ...;
 addon_name = "RaidSkipper";
 
 local raid_skip_quests = {
-    [1] = { 
+    {
         name = "Warlords of Draenor",
         raids = {
-            [1] = { name = "Blackrock Foundary", mythicId = 37031, heroicId = 37030, normalId = 37029 },
-            [2] = { name = "Hellfire Citadel Lower", mythicId = 39501, heroicId = 39500, normalId = 39499 },
-            [3] = { name = "Hellfire Citadel Upper", mythicId = 39505, heroicId = 39504, normalId = 39502 }
+            { name = "Blackrock Foundary", instanceId = 1205,  mythicId = 37031, heroicId = 37030, normalId = 37029 },
+            { name = "Hellfire Citadel Lower", instanceId = 1448, mythicId = 39501, heroicId = 39500, normalId = 39499 },
+            { name = "Hellfire Citadel Upper", instanceId = 1448, mythicId = 39505, heroicId = 39504, normalId = 39502 }
         }
     },
-    [2] = { 
+    {
         name = "Legion",
         raids = {
-            [1] = { name = "The Emerald Nightmare", mythicId = 44285, heroicId = 44284, normalId = 44283 },
-            [2] = { name = "The Nighthold", mythicId = 45383, heroicId = 45382, normalId = 45381 },
-            [3] = { name = "Tomb of Sargeras", mythicId = 47727, heroicId = 47726, normalId = 47725 },
-            [4] = { name = "Burning Throne Lower", mythicId = 49076, heroicId = 49075, normalId = 49032 },
-            [5] = { name = "Burning Throne Upper", mythicId = 49135, heroicId = 49134, normalId = 49133 }
+            { name = "The Emerald Nightmare", instanceId = 1520, mythicId = 44285, heroicId = 44284, normalId = 44283 },
+            { name = "The Nighthold", instanceId = 1530, mythicId = 45383, heroicId = 45382, normalId = 45381 },
+            { name = "Tomb of Sargeras", instanceId = 1676, mythicId = 47727, heroicId = 47726, normalId = 47725 },
+            { name = "Burning Throne Lower", instanceId = 1712, mythicId = 49076, heroicId = 49075, normalId = 49032 },
+            { name = "Burning Throne Upper", instanceId = 1712, mythicId = 49135, heroicId = 49134, normalId = 49133 }
         }
     },
-    [3] = { 
+    {
         name = "Battle for Azeroth",
         raids = {
-            [1] = { name = "Battle of Dazar'alor", mythicId = 316476 },
-            [2] = { name = "Ny'alotha, the Waking City", mythicId = 58375, heroicId = 58374, normalId = 58373 }
+            { name = "Battle of Dazar'alor", instanceId = 2070, mythicId = 316476 },
+            { name = "Ny'alotha, the Waking City", instanceId = 2217, mythicId = 58375, heroicId = 58374, normalId = 58373 }
         }
     },
-    [4] = { 
+    {
         name = "Shadowlands",
         raids = {
-            [1] = { name = "Castle Nathria", mythicId = 62056, heroicId = 62055, normalId = 62054 },
-            [2] = { name = "Sanctum of Domination", mythicId = 64599, heroicId = 64598, normalId = 64597 }
+            { name = "Castle Nathria", instanceId = 2296, mythicId = 62056, heroicId = 62055, normalId = 62054 },
+            { name = "Sanctum of Domination", instanceId = 2450, mythicId = 64599, heroicId = 64598, normalId = 64597 }
         }
     }
 }
 
-RaidSkipper.AceAddon = LibStub("AceAddon-3.0"):NewAddon("RaidSkipper", "AceConsole-3.0");
+local tmp_data = {}
+
+RaidSkipper.AceAddon = LibStub("AceAddon-3.0"):NewAddon("RaidSkipper", "AceConsole-3.0", "AceEvent-3.0");
 
 -- Workaround to keep the nice RaidSkipper:Print function.
 RaidSkipper.Print = function(self, text) RaidSkipper.AceAddon:Print(text) end
@@ -120,13 +122,18 @@ local function ShowExpansion(data)
     
     RaidSkipper:Print(data.name)
 
-    for key, raid in pairs(data.raids) do
+    for key, raid in ipairs(data.raids) do
         ShowRaidSkip(raid)
     end
 end
 
+local function ShowRaid(data)
+    
+    ShowRaidSkip(data)
+end
+
 local function ShowExpansions()
-    for name, data in pairs(raid_skip_quests) do
+    for name, data in ipairs(raid_skip_quests) do
         ShowExpansion(data)
     end
 end
@@ -144,34 +151,71 @@ local function PrintHelp()
     RaidSkipper:Print("  /rs sl --> Shadowlands")
 end
 
+local function ShowRaidInstanceById(id)
+    local output = ""
+    local found = false
+    for expansionKey, expansionData in ipairs(raid_skip_quests) do
+        for raidKey, raidData in ipairs(expansionData.raids) do
+            if (raidData.instanceId == id) then
+                if not found then
+                    RaidSkipper:Print(expansionData.name)
+                end
+                ShowRaidSkip(raidData)
+                found = true
+            end
+        end
+    end
+end
+
+local function InRaid() 
+    local instanceType = select(2, GetInstanceInfo());
+    return instanceType == "raid";
+end
+
+local function OnChangeZone()
+    local in_raid = InRaid()
+    if in_raid then
+        ShowRaidInstanceById(instanceID)
+    end
+end
+
+local function ShowCurrentRaid() 
+    local instanceID = select(8, GetInstanceInfo());
+    ShowRaidInstanceById(instanceID);
+end
+
 function SlashHandler(args)
-    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
+    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1);
 
     if arg1 then
         arg1 = arg1:lower()
         
-        if arg1 == "wod" then
-            ShowExpansion(raid_skip_quests[1])
+        if arg1 == "all" then
+            ShowExpansions();
+        elseif arg1 == "wod" then
+            ShowExpansion(raid_skip_quests[1]);
         elseif arg1 == "legion" then
-            ShowExpansion(raid_skip_quests[2])
+            ShowExpansion(raid_skip_quests[2]);
         elseif arg1 == "bfa" then
-            ShowExpansion(raid_skip_quests[3])
+            ShowExpansion(raid_skip_quests[3]);
         elseif arg1 == "sl" then
-            ShowExpansion(raid_skip_quests[4])
-        elseif arg1 == "help" then
-            PrintHelp()
+            ShowExpansion(raid_skip_quests[4]);
+        else
+            PrintHelp();
         end
     else
-        ShowExpansions()
+        if InRaid() then
+            ShowCurrentRaid();
+        else
+            ShowExpansions();
+        end
     end
 end
 
 function RaidSkipper.AceAddon:OnInitialize()
-    self:Print("Raid Skipper Initialized");
-
+    self:RegisterEvent("ZONE_CHANGED_NEW_AREA", OnChangeZone);
     self:RegisterChatCommand("raidskipper", SlashHandler);
     self:RegisterChatCommand("rs", SlashHandler);
-
 end
 
 function RaidSkipper.AceAddon:OnEnable()
