@@ -2,8 +2,8 @@
 --  Raid Skipper: Show what raid content can be skipped   --
 ------------------------------------------------------------
 
-local _, RaidSkipper = ...;
-addon_name = "RaidSkipper";
+local _, RaidSkipper = ...
+addon_name = "RaidSkipper"
 
 local raid_skip_quests = {
     {
@@ -42,7 +42,7 @@ local raid_skip_quests = {
 
 local tmp_data = {}
 
-RaidSkipper.AceAddon = LibStub("AceAddon-3.0"):NewAddon("RaidSkipper", "AceConsole-3.0", "AceEvent-3.0");
+RaidSkipper.AceAddon = LibStub("AceAddon-3.0"):NewAddon("RaidSkipper", "AceConsole-3.0", "AceEvent-3.0")
 
 -- Workaround to keep the nice RaidSkipper:Print function.
 RaidSkipper.Print = function(self, text) RaidSkipper.AceAddon:Print(text) end
@@ -168,54 +168,55 @@ local function ShowRaidInstanceById(id)
 end
 
 local function InRaid() 
-    local instanceType = select(2, GetInstanceInfo());
-    return instanceType == "raid";
+    local instanceType = select(2, GetInstanceInfo())
+    return instanceType == "raid"
 end
 
 local function OnChangeZone()
     local in_raid = InRaid()
+    local instanceID = select(8, GetInstanceInfo())
     if in_raid then
         ShowRaidInstanceById(instanceID)
     end
 end
 
 local function ShowCurrentRaid() 
-    local instanceID = select(8, GetInstanceInfo());
-    ShowRaidInstanceById(instanceID);
+    local instanceID = select(8, GetInstanceInfo())
+    ShowRaidInstanceById(instanceID)
 end
 
 function SlashHandler(args)
-    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1);
+    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
 
     if arg1 then
         arg1 = arg1:lower()
         
         if arg1 == "all" then
-            ShowExpansions();
+            ShowExpansions()
         elseif arg1 == "wod" then
-            ShowExpansion(raid_skip_quests[1]);
+            ShowExpansion(raid_skip_quests[1])
         elseif arg1 == "legion" then
-            ShowExpansion(raid_skip_quests[2]);
+            ShowExpansion(raid_skip_quests[2])
         elseif arg1 == "bfa" then
-            ShowExpansion(raid_skip_quests[3]);
+            ShowExpansion(raid_skip_quests[3])
         elseif arg1 == "sl" then
-            ShowExpansion(raid_skip_quests[4]);
+            ShowExpansion(raid_skip_quests[4])
         else
-            PrintHelp();
+            PrintHelp()
         end
     else
         if InRaid() then
-            ShowCurrentRaid();
+            ShowCurrentRaid()
         else
-            ShowExpansions();
+            ShowExpansions()
         end
     end
 end
 
 function RaidSkipper.AceAddon:OnInitialize()
-    self:RegisterEvent("ZONE_CHANGED_NEW_AREA", OnChangeZone);
-    self:RegisterChatCommand("raidskipper", SlashHandler);
-    self:RegisterChatCommand("rs", SlashHandler);
+    self:RegisterEvent("ZONE_CHANGED_NEW_AREA", OnChangeZone)
+    self:RegisterChatCommand("raidskipper", SlashHandler)
+    self:RegisterChatCommand("rs", SlashHandler)
 end
 
 function RaidSkipper.AceAddon:OnEnable()
