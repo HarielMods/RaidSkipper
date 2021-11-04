@@ -1,3 +1,8 @@
+# Raid Skipper
+
+### 1.0.5
+* Update for 1.0.5
+
 ### 1.0.4
 * Show current raid skip info when entering a raid
 * Updated "/rs" behavior: 
@@ -17,4 +22,3 @@
 
 ### 1.0.0
 * Initial release
-
