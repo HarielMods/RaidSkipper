@@ -53,3 +53,4 @@ Blue: Quest is in progress
 Added "/rs korthia" to help track the daily lootables in Korthia. This should probably be moved to a new addon.
 
 ![Example Screenshot](screenshot1.png?raw=true "Example Screenshot")
+
