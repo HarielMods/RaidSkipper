@@ -185,6 +185,117 @@ local function ShowCurrentRaid()
     ShowRaidInstanceById(instanceID)
 end
 
+-- ----------------------------------------------------------------------------------------------------
+-- Korthia Functions
+
+local function InvasiveMawshroom()
+    local i,s,_,_,_,n,t = 0,{64351,64354,64355,64356,64357},GetQuestObjectiveInfo(64376,0,false)
+    for _,q in ipairs(s) do 
+        i=i+(C_QuestLog.IsQuestFlaggedCompleted(q)and 1 or 0)
+    end
+    print(i .. ' / 5 Mawshooms looted. ' .. n .. '/' .. t .. ' Tasty turned in.')
+end
+
+local function NestOfUnusualMaterials()
+    local i,s,_,_,_,t = 0, {64358,63459,64360,64361,64362}
+    for _,q in ipairs(s) do 
+        i=i+(C_QuestLog.IsQuestFlaggedCompleted(q)and 1 or 0)
+    end
+    print(i .. ' / 5 Nests looted.')
+end
+
+local function MawswornCache()
+    local i,s,_,_,_,t = 0,{64021,64363,64364}
+    for _,q in ipairs(s) do 
+        i=i+(C_QuestLog.IsQuestFlaggedCompleted(q)and 1 or 0)
+    end
+    print(i .. ' / 3 Mawsworn Caches looted.')
+end
+
+local function PileOfBonesShardHideStashesRelicChests()
+    local i,s,_,_,_,t=0,{64309,64316,64317,64318,64564}
+    for _,q in ipairs(s) do 
+        i=i+(C_QuestLog.IsQuestFlaggedCompleted(q)and 1 or 0)
+    end
+    print(i .. ' / 5 Pile Of Bones, Shardhide Stashes, Relic Chests looted.')
+end
+
+local function RiftboundCaches()
+    local i,s,_,_,_,t=0,{64456,64470,64471,64472}
+    for _,q in ipairs(s) do 
+        i=i+(C_QuestLog.IsQuestFlaggedCompleted(q)and 1 or 0)
+    end
+    print(i .. ' / 4 Riftbound Caches looted.')
+end
+
+local function RelicGorgerRelicGatherer()
+    local i,s,_,_,_,t=0,{64433,64434,64435,64436}
+    for _,q in ipairs(s) do 
+        i=i+(C_QuestLog.IsQuestFlaggedCompleted(q)and 1 or 0)
+    end
+    print(i .. ' / 4 Relic Gorgers/Gatherers looted.')
+end
+
+-- TODO: Find quest ids for anima vessels
+-- local function AnimaVessels()
+--     local i,s,_,_,_,t=0,{}
+--     for _,q in ipairs(s) do 
+--         i=i+(C_QuestLog.IsQuestFlaggedCompleted(q)and 1 or 0)
+--     end
+--     print('Anima Vessels looted today: '..i..' of 5.')
+-- end
+
+local function HelswornChest()
+    local i,s,_,_,_,t=0,{64256}
+    for _,q in ipairs(s) do 
+        i=i+(C_QuestLog.IsQuestFlaggedCompleted(q)and 1 or 0)
+    end
+    print(i .. ' / 1 Helsworn Chest looted.')
+end
+
+local function SpectralKeys()
+    local i,s,_,_,_,t=0,{64249,64250,64248}
+    for _,q in ipairs(s) do 
+        i=i+(C_QuestLog.IsQuestFlaggedCompleted(q) and 1 or 0)
+    end
+    local c=(C_QuestLog.IsQuestFlaggedCompleted(64247) and "yes" or "no")
+    print(i .. ' / 3 Spectral Keys looted. Chest looted ' .. c)
+end
+
+local function ResearchReportRelicExaminationTechniques()
+    if C_QuestLog.IsQuestFlaggedCompleted(64367) ~= true then
+        print('Obtain Research Report: Relic Examination Techniques for faster reputation gains')
+    end
+end
+
+local function ShowKorthiaDailyCaps()
+    -- 5 Invasive Mawshrooms (no longer spawn for the day once looted)
+    InvasiveMawshroom()
+    -- 5 Nests of Unusual Materials (no longer spawn for the day once looted)
+    NestOfUnusualMaterials()
+    -- 3 Mawsworn Caches (no longer spawn for the day once looted)
+    MawswornCache()
+    -- 5 of either Pile of Bones, Shardhide Stashes or Relic Chests (can be looted but will no longer give Relic Fragment past cap)
+    PileOfBonesShardHideStashesRelicChests()
+    -- 4 Riftbound Caches (no longer spawn for the day once looted)
+    RiftboundCaches()
+    -- 4 Relic Gorger/Relic Gatherer Rares (no longer tracked for the day once past cap)
+    RelicGorgerRelicGatherer()
+    -- 5 Anima Vessels (no longer spawn for the day once looted)
+    -- TODO
+    -- 1 Helsworn Chest (no longer spawn for the day once looted)
+    HelswornChest()
+    -- 15 Enemies tracked via Research Report: All-Seeing Crystal (rewards diminish the more you kill, no longer tracked after 15).
+    -- TODO
+
+    -- Spectral chest/keys
+    SpectralKeys()
+
+    -- Obtain Research Report for each character for faster reputation gains
+    ResearchReportRelicExaminationTechniques()
+end
+-- ----------------------------------------------------------------------------------------------------
+
 function SlashHandler(args)
     local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
 
@@ -201,6 +312,9 @@ function SlashHandler(args)
             ShowExpansion(raid_skip_quests[3])
         elseif arg1 == "sl" then
             ShowExpansion(raid_skip_quests[4])
+        elseif arg1 == "korthia" then
+            ShowKorthiaDailyCaps()
+            -- TODO: show collectibles, upgrades (account/individual), xmogs
         else
             PrintHelp()
         end

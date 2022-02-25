@@ -1,5 +1,9 @@
 # Raid Skipper
 
+### 1.0.6
+* Update for WoW v9.2
+* Added "/rs korthia" to track Korthia daily lootables. Should probably move to a new addon.
+
 ### 1.0.5
 * Update for 1.0.5
 
