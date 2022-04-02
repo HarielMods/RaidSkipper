@@ -5,4 +5,5 @@
 ## Version: 1.0.7
 
 embeds.xml
+Data.lua
 RaidSkipper.lua

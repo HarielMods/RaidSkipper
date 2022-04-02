@@ -1,5 +1,8 @@
 # Raid Skipper
 
+### 1.0.8
+* Added Sepulcher raid data
+
 ### 1.0.7
 * Trying to get WoWUp to recognize the update
 
