@@ -1,5 +1,8 @@
 # Raid Skipper
 
+### 1.0.10
+* Update interface number for Dragonflight
+
 ### 1.0.8
 * Added Sepulcher raid data
 

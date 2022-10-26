@@ -1,8 +1,8 @@
-## Interface: 90205
 ## Title: Raid Skipper
+## Interface: 100000
 ## Notes: Show which raid content player can skip
 ## Author: Hariel
-## Version: 1.0.9
+## Version: 1.0.10
 
 embeds.xml
 Data.lua
