@@ -2,7 +2,7 @@
 ## Interface: 100002
 ## Notes: Show which raid content player can skip
 ## Author: Hariel
-## Version: 1.0.11
+## Version: 1.0.12
 ## X-Curse-Project-ID: 520345
 ## X-WoWI-ID: 26312
 ## X-Wago-ID: XrNkD46a
