@@ -22,7 +22,7 @@ RaidSkipper.raid_skip_quests = {
     {
         name = "Battle for Azeroth",
         raids = {
-            { name = "Battle of Dazar'alor", instanceId = 2070, mythicId = 316476 },
+            { name = "Battle of Dazar'alor", instanceId = 2070, achievementId = 13314, mythicId = 316476 },
             { name = "Ny'alotha, the Waking City", instanceId = 2217, mythicId = 58375, heroicId = 58374, normalId = 58373 }
         }
     },

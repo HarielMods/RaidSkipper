@@ -27,7 +27,7 @@ end
 
 -- QUEST FUNCTIONS
 
-local function IsComplete(id)
+local function IsQuestComplete(id)
     if (id ~= nil) then
         return C_QuestLog.IsQuestFlaggedCompleted(id)
     else
@@ -35,8 +35,13 @@ local function IsComplete(id)
     end
 end
 
-local function IsInProgress(id)
-    local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(id, 1, false)
+local function IsAchievementComplete(id)
+    if (id ~= nil) then
+        local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(id)
+        return completed
+    else
+        return nil
+    end
 end
 
 local function IsQuestInQuestLog(id)
@@ -51,7 +56,7 @@ local function ShowQuestProgress(id)
 end
 
 local function ShowQuestInfo(id, difficulty)
-    if (IsComplete(id)) then
+    if (IsQuestComplete(id)) then
         -- Player has completed this quest
         return RaidSkipper.TextColor("complete", difficulty)
     elseif (IsQuestInQuestLog(id)) then
@@ -63,26 +68,45 @@ local function ShowQuestInfo(id, difficulty)
     end
 end
 
+local function ShowAchievementInfo(id)
+    if (IsAchievementComplete(id)) then
+        -- Player has completed achievement
+        RaidSkipper:Print("completed")
+    else
+        RaidSkipper:Print("not completed")
+    end
+end
+
 local function ShowRaidSkip(raid)
     local line = "  " .. raid.name .. ": "
-    
-    -- Mythic
-    line = line .. ShowQuestInfo(raid.mythicId, "Mythic")
-    
-    -- Heroic, if Mythic is complete Heroic and Normal can be skipped
-    if (not IsComplete(raid.mythicId) and raid.heroicId ~= nil) then
-        line = line .. " " .. ShowQuestInfo(raid.heroicId, "Heroic")
-        -- Normal, if Heroic is complete Normal can be skipped
-        if (not IsComplete(raid.heroicId) and raid.normalId ~= nil) then
-            line = line .. " " .. ShowQuestInfo(raid.normalId, "Normal")
+
+    -- Battle of Dazar'alor uses an Achievement, not quests
+    if raid.instanceId == 2070 then
+        local completed = IsAchievementComplete(raid.achievementId)
+        if completed then
+            line = line .. RaidSkipper.TextColor("complete", "completed")
+        else
+            line = line .. RaidSkipper.TextColor("incomplete", "not completed")
         end
+    else
+        -- Mythic
+        line = line .. ShowQuestInfo(raid.mythicId, "Mythic")
+        
+        -- Heroic, if Mythic is complete Heroic and Normal can be skipped
+        if (not IsQuestComplete(raid.mythicId) and raid.heroicId ~= nil) then
+            line = line .. " " .. ShowQuestInfo(raid.heroicId, "Heroic")
+            -- Normal, if Heroic is complete Normal can be skipped
+            if (not IsQuestComplete(raid.heroicId) and raid.normalId ~= nil) then
+                line = line .. " " .. ShowQuestInfo(raid.normalId, "Normal")
+            end
+        end
+        
     end
     
     RaidSkipper:Print(line)
 end
 
 local function ShowExpansion(data)
-    
     RaidSkipper:Print(data.name)
 
     for key, raid in ipairs(data.raids) do
@@ -91,7 +115,6 @@ local function ShowExpansion(data)
 end
 
 local function ShowRaid(data)
-    
     ShowRaidSkip(data)
 end
 
@@ -289,12 +312,34 @@ function SlashHandler(args)
     end
 end
 
+function IsAchievementCompleteHandler(args)
+    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
+
+    if arg1 then
+        ShowAchievementInfo(arg1)
+    end
+end
+
+function IsQuestCompleteHandler(args)
+    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
+
+    if arg1 then
+        if IsQuestComplete(arg1) then
+            RaidSkipper:Print("completed")
+        else
+            RaidSkipper:Print("not completed")
+        end
+    end
+end
+
 function RaidSkipper.AceAddon:OnInitialize()
     
     self:RegisterEvent("ZONE_CHANGED_NEW_AREA", OnChangeZone)
     
     self:RegisterChatCommand("raidskipper", SlashHandler)
     self:RegisterChatCommand("rs", SlashHandler)
+    self:RegisterChatCommand("iac", IsAchievementCompleteHandler)
+    self:RegisterChatCommand("iqc", IsQuestCompleteHandler)
 end
 
 function RaidSkipper.AceAddon:OnEnable()
