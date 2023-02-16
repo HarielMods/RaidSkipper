@@ -1,5 +1,8 @@
 # Raid Skipper
 
+### 1.0.13
+* Fix Battle of Dazar'alor
+
 ### 1.0.10
 * Update interface number for Dragonflight
 
