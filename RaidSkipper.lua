@@ -135,6 +135,7 @@ local function PrintHelp()
     RaidSkipper:Print("  /rs legion --> Legion")
     RaidSkipper:Print("  /rs bfa --> Battle for Azeroth")
     RaidSkipper:Print("  /rs sl --> Shadowlands")
+    RaidSkipper:Print("  /rs df --> Dragonflight")
 end
 
 local function ShowRaidInstanceById(id)
@@ -298,7 +299,9 @@ function SlashHandler(args)
             ShowExpansion(RaidSkipper.raid_skip_quests[3])
         elseif arg1 == "sl" then
             ShowExpansion(RaidSkipper.raid_skip_quests[4])
-        elseif arg1 == "korthia" then
+        elseif arg1 == "df" then
+            ShowExpansion(RaidSkipper.raid_skip_quests[5])
+       elseif arg1 == "korthia" then
             ShowKorthiaDailyCaps()
         else
             PrintHelp()
