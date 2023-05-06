@@ -63,6 +63,9 @@ RaidSkipper.raid_skip_quests = {
         raids = {
             -- instanceId is not correct, I do know which ID should be used.
             { name = "Vault of the Incarnates", instanceId = 2296, mythicId = 71020, heroicId = 71019, normalId = 71018 },
+            -- instanceId is not correct, I do know which ID should be used.
+            -- Aberrus seems to only have a heroic and mythic quest, no normal quest https://www.wowhead.com/zone=14663/aberrus-the-shadowed-crucible#quests
+            { name = "Aberrus, the Shadowed Crucible", instanceId = 2296, mythicId = 76086, heroicId = 76085 },
         }
     }
 }
