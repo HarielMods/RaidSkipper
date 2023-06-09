@@ -33,5 +33,12 @@ RaidSkipper.raid_skip_quests = {
             { name = "Sanctum of Domination", instanceId = 2450, mythicId = 64599, heroicId = 64598, normalId = 64597 },
             { name = "Sepulcher of the First Ones", instanceId = 2481, mythicId = 65762, heroicId = 65763, normalId = 65764 }
         }
+    },
+    {
+        name = "Dragonflight",
+        raids = {
+            { name = "Vault of the Incarnates", instanceId = 14030, mythicId = 71020, heroicId = 71019, normalId = 71018 },
+            { name = "Aberrus, the Shadowed Crucible", instanceId = 14663, mythicId = 76086, heroicId = 76085, normalId = 76083 }
+        }
     }
 }

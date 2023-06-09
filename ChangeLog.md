@@ -1,5 +1,9 @@
 # Raid Skipper
 
+### 1.0.15
+* Added Vault of the Incarnates
+* Added Aberrus, the Shadowed Crucible
+
 ### 1.0.13
 * Fix Battle of Dazar'alor
 
