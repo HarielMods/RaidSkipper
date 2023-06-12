@@ -61,11 +61,9 @@ RaidSkipper.raid_skip_quests = {
     {
         name = "Dragonflight",
         raids = {
-            -- instanceId is not correct, I do know which ID should be used.
-            { name = "Vault of the Incarnates", instanceId = 2296, mythicId = 71020, heroicId = 71019, normalId = 71018 },
-            -- instanceId is not correct, I do know which ID should be used.
+            { name = "Vault of the Incarnates", instanceId = 14030, mythicId = 71020, heroicId = 71019, normalId = 71018 },
             -- Aberrus seems to only have a heroic and mythic quest, no normal quest https://www.wowhead.com/zone=14663/aberrus-the-shadowed-crucible#quests
-            { name = "Aberrus, the Shadowed Crucible", instanceId = 2296, mythicId = 76086, heroicId = 76085 },
+            { name = "Aberrus, the Shadowed Crucible", instanceId = 14663, mythicId = 76086, heroicId = 76085, normalId = 76083 },
         }
     }
 }
