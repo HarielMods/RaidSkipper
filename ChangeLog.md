@@ -1,5 +1,10 @@
 # Raid Skipper
 
+### 1.0.16
+* Added missing Dragonflight arguments.
+* Rearranged readme to be newer raids on top.
+* Removed Korthia in favor of the [Korthia Checklist WeakAura] (https://wago.io/cyRj6ikQz).
+
 ### 1.0.15
 * Added Vault of the Incarnates
 * Added Aberrus, the Shadowed Crucible

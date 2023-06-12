@@ -21,36 +21,37 @@ Blue: Quest is in progress
 
 **Show only one expansion:**
 
-* /rs wod
-* /rs legion
-* /rs bfa
+* /rs df
 * /rs sl
+* /rs bfa
+* /rs legion
+* /rs wod
 
 ## Raids Currently Supported
 
-#### Warlords of Draenor
-  * Blackrock Foundary
-  * Hellfire Citdael Lower
-  * Hellfire Citdael Upper
-
-#### Legion
-  * The Emerald Nightmare
-  * The Nighthold
-  * Tomb of Sageras
-  * Antorus, The Burning Throne Lower
-  * Antorus, The Burning Throne Upper
-
-#### Battle for Azeroth
-  * Battle of Dazor'alor
-  * Ny'alotha, the Waking City
+#### Dragonflight
+  * Aberrus, the Shadowed Crucible
+  * Vault of the Incarnates
 
 #### Shadowland
-  * Castle Nathria
   * Sanctum of Domination
+  * Castle Nathria
 
-#### Korthia
+#### Battle for Azeroth
+  * Ny'alotha, the Waking City
+  * Battle of Dazor'alor
 
-Added "/rs korthia" to help track the daily lootables in Korthia. This should probably be moved to a new addon.
+#### Legion
+  * Antorus, The Burning Throne Upper
+  * Antorus, The Burning Throne Lower
+  * Tomb of Sageras
+  * The Nighthold
+  * The Emerald Nightmare
+
+#### Warlords of Draenor
+  * Hellfire Citdael Upper
+  * Hellfire Citdael Lower
+  * Blackrock Foundary
 
 ![Example Screenshot](screenshot1.png?raw=true "Example Screenshot")
 
