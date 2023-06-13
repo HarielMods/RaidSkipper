@@ -3,6 +3,8 @@
 ------------------------------------------------------------
 
 local _, RaidSkipper = ...
+local GetRealZoneText = GetRealZoneText
+
 addon_name = "RaidSkipper"
 
 RaidSkipper.AceAddon = LibStub("AceAddon-3.0"):NewAddon("RaidSkipper", "AceConsole-3.0", "AceEvent-3.0")
@@ -14,9 +16,9 @@ RaidSkipper.Print = function(self, text) RaidSkipper.AceAddon:Print(text) end
 
 RaidSkipper.TextColor = function(color, msg)
     local colors = {
-        ["complete"] = "ff00ff00",
-        ["incomplete"] = "ffff0000",
-        ["inprogress"] = "ff00ffff",
+        [COMPLETE] = "ff00ff00",
+        [INCOMPLETE] = "ffff0000",
+        [IN_PROGRESS] = "ff00ffff",
         ["yellow"] = "ffffff00",
         ["red"] = "ffff0000",
         ["green"] = "ff00ff00",
@@ -58,44 +60,44 @@ end
 local function ShowQuestInfo(id, difficulty)
     if (IsQuestComplete(id)) then
         -- Player has completed this quest
-        return RaidSkipper.TextColor("complete", difficulty)
+        return RaidSkipper.TextColor(COMPLETE, difficulty)
     elseif (IsQuestInQuestLog(id)) then
         -- Player has this quest in their quest log
-        return RaidSkipper.TextColor("inprogress", difficulty .. " " .. ShowQuestProgress(id))
+        return RaidSkipper.TextColor(IN_PROGRESS, difficulty .. " " .. ShowQuestProgress(id))
     else
         -- Player has not completed this quest does not have quest in the quest log
-        return RaidSkipper.TextColor("incomplete", difficulty)
+        return RaidSkipper.TextColor(INCOMPLETE, difficulty)
     end
 end
 
 local function ShowAchievementInfo(id)
     if (IsAchievementComplete(id)) then
         -- Player has completed achievement
-        RaidSkipper:Print("completed")
+        RaidSkipper:Print(COMPLETE)
     else
-        RaidSkipper:Print("not completed")
+        RaidSkipper:Print(INCOMPLETE)
     end
 end
 
 local function ShowRaidSkip(raid)
-    local line = "  " .. raid.name .. ": "
+    local line = "  " .. GetRealZoneText(raid.instanceId) .. ": "
     -- Battle of Dazar'alor uses an Achievement, not quests
     if raid.instanceId == 2070 then
         local completed = IsAchievementComplete(raid.achievementId)
         if completed then
-            line = line .. RaidSkipper.TextColor("complete", "completed")
+            line = line .. RaidSkipper.TextColor(COMPLETE, COMPLETE)
         else
-            line = line .. RaidSkipper.TextColor("incomplete", "not completed")
+            line = line .. RaidSkipper.TextColor(INCOMPLETE, INCOMPLETE)
         end
     else
         -- Mythic
-        line = line .. ShowQuestInfo(raid.mythicId, "Mythic")
+        line = line .. ShowQuestInfo(raid.mythicId, PLAYER_DIFFICULTY6)
         -- Heroic, if Mythic is complete Heroic and Normal can be skipped
         if (not IsQuestComplete(raid.mythicId) and raid.heroicId ~= nil) then
-            line = line .. " " .. ShowQuestInfo(raid.heroicId, "Heroic")
+            line = line .. " " .. ShowQuestInfo(raid.heroicId, PLAYER_DIFFICULTY2)
             -- Normal, if Heroic is complete Normal can be skipped
             if (not IsQuestComplete(raid.heroicId) and raid.normalId ~= nil) then
-                line = line .. " " .. ShowQuestInfo(raid.normalId, "Normal")
+                line = line .. " " .. ShowQuestInfo(raid.normalId, PLAYER_DIFFICULTY1)
             end
         end
     end
@@ -120,7 +122,7 @@ local function ShowExpansions()
 end
 
 local function ShowKey()
-    Print("Key: " .. TextColor("blue", "In progress") .. " " .. TextColor("green", "Completed") .. " " .. TextColor("red", "Not completed"))
+    Print("Key: " .. TextColor("blue", IN_PROGRESS) .. " " .. TextColor("green", COMPLETE) .. " " .. TextColor("red", INCOMPLETE))
     Print("Use '/rs help' to display more help")
 end
 
@@ -212,9 +214,9 @@ function IsQuestCompleteHandler(args)
 
     if arg1 then
         if IsQuestComplete(arg1) then
-            RaidSkipper:Print("completed")
+            RaidSkipper:Print(COMPLETE)
         else
-            RaidSkipper:Print("not completed")
+            RaidSkipper:Print(INCOMPLETE)
         end
     end
 end
