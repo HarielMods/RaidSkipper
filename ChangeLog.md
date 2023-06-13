@@ -1,5 +1,9 @@
 # Raid Skipper
 
+### 1.0.17
+* Merged in pull requests for Dragonflight support and Multilingual support!
+  Thank you Skylli202 and EKE00372!
+
 ### 1.0.16
 * Added missing Dragonflight arguments.
 * Rearranged readme to be newer raids on top.
