@@ -79,7 +79,6 @@ end
 
 local function ShowRaidSkip(raid)
     local line = "  " .. raid.name .. ": "
-
     -- Battle of Dazar'alor uses an Achievement, not quests
     if raid.instanceId == 2070 then
         local completed = IsAchievementComplete(raid.achievementId)
@@ -91,7 +90,6 @@ local function ShowRaidSkip(raid)
     else
         -- Mythic
         line = line .. ShowQuestInfo(raid.mythicId, "Mythic")
-        
         -- Heroic, if Mythic is complete Heroic and Normal can be skipped
         if (not IsQuestComplete(raid.mythicId) and raid.heroicId ~= nil) then
             line = line .. " " .. ShowQuestInfo(raid.heroicId, "Heroic")
@@ -100,15 +98,12 @@ local function ShowRaidSkip(raid)
                 line = line .. " " .. ShowQuestInfo(raid.normalId, "Normal")
             end
         end
-        
     end
-    
     RaidSkipper:Print(line)
 end
 
 local function ShowExpansion(data)
     RaidSkipper:Print(data.name)
-
     for key, raid in ipairs(data.raids) do
         ShowRaidSkip(raid)
     end

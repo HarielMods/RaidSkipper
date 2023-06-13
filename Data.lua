@@ -23,39 +23,15 @@ RaidSkipper.raid_skip_quests = {
         name = "Battle for Azeroth",
         raids = {
             { name = "Battle of Dazar'alor", instanceId = 2070, achievementId = 13314, mythicId = 316476 },
-            {
-                name = "Ny'alotha, the Waking City",
-                instanceId = 2217,
-                mythicId = 58375,
-                heroicId = 58374,
-                normalId = 58373
-            }
+            { name = "Ny'alotha, the Waking City", instanceId = 2217, mythicId = 58375, heroicId = 58374, normalId = 58373 }
         }
     },
     {
         name = "Shadowlands",
         raids = {
-            {
-                name = "Castle Nathria",
-                instanceId = 2296,
-                mythicId = 62056,
-                heroicId = 62055,
-                normalId = 62054
-            },
-            {
-                name = "Sanctum of Domination",
-                instanceId = 2450,
-                mythicId = 64599,
-                heroicId = 64598,
-                normalId = 64597
-            },
-            {
-                name = "Sepulcher of the First Ones",
-                instanceId = 2481,
-                mythicId = 65762,
-                heroicId = 65763,
-                normalId = 65764
-            }
+            { name = "Castle Nathria", instanceId = 2296, mythicId = 62056, heroicId = 62055, normalId = 62054 },
+            { name = "Sanctum of Domination", instanceId = 2450, mythicId = 64599, heroicId = 64598, normalId = 64597 },
+            { name = "Sepulcher of the First Ones", instanceId = 2481, mythicId = 65762, heroicId = 65763, normalId = 65764 }
         }
     },
     {
