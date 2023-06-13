@@ -1,5 +1,8 @@
 # Raid Skipper
 
+### 1.0.18
+* Turns out Skylli202's raid ids for DF were right the first time.
+
 ### 1.0.17
 * Merged in pull requests for Dragonflight support and Multilingual support!
   Thank you Skylli202 and EKE00372!

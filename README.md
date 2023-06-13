@@ -55,3 +55,4 @@ Blue: Quest is in progress
 
 ![Example Screenshot](screenshot1.png?raw=true "Example Screenshot")
 
+_Korthia functions removed in favor of the [Korthia Checklist WeakAura](https://wago.io/cyRj6ikQz)_
