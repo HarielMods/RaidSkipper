@@ -27,6 +27,10 @@ Blue: Quest is in progress
 * /rs legion
 * /rs wod
 
+**Show all chars status**
+
+* /rs list
+
 ## Raids Currently Supported
 
 #### Dragonflight
