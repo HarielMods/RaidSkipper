@@ -21,6 +21,8 @@ end
 local function saveSkip(raid, skip, status)
     local playerName = UnitName("player");
     local class, _, _ = UnitClass(playerName);
+    local realmName = GetRealmName();
+    local playerRealm = playerName .. "-" .. realmName;
     local color = nil
 
     if class ~= nil then
@@ -32,8 +34,15 @@ local function saveSkip(raid, skip, status)
         color = RAID_CLASS_COLORS[string.upper(class)]
     end
     local cc = color or {colorStr = 'ffff0000'}
-    if raid_skipper_db[playerName] == nil or raid_skipper_db[playerName]["version"] == nil then
-        raid_skipper_db[playerName] = {
+    
+    -- Rename existing playername to one with realm
+    if raid_skipper_db[playerName] ~= nil and raid_skipper_db[playerRealm] == nil then 
+        raid_skipper_db[playerRealm] = raid_skipper_db[playerName];
+        raid_skipper_db[playerName] = nil;
+    end
+
+    if raid_skipper_db[playerRealm] == nil or raid_skipper_db[playerRealm]["version"] == nil then
+        raid_skipper_db[playerRealm] = {
             ["version"] = 110,
             ["class"] = class,
             ["color"] = cc.colorStr,
@@ -41,7 +50,7 @@ local function saveSkip(raid, skip, status)
         }
     end
 
-    raid_skipper_db[playerName]["raids"][raid .. " - " .. skip] = {
+    raid_skipper_db[playerRealm]["raids"][raid .. " - " .. skip] = {
         ["name"] = raid,
         ["status"] = status,
         ["difficulty"] = skip
