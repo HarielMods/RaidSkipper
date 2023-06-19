@@ -12,6 +12,65 @@ RaidSkipper.AceAddon = LibStub("AceAddon-3.0"):NewAddon("RaidSkipper", "AceConso
 -- Workaround to keep the nice RaidSkipper:Print function.
 RaidSkipper.Print = function(self, text) RaidSkipper.AceAddon:Print(text) end
 
+-- Db and Save Skip
+
+if raid_skipper_db == nil then
+    raid_skipper_db = { }
+end
+
+local function saveSkip(raid, skip, status)
+    local playerName = UnitName("player");
+    local class, _, _ = UnitClass(playerName);
+    local realmName = GetRealmName();
+    local playerRealm = playerName .. "-" .. realmName;
+    local color = nil
+
+    if class ~= nil then
+        if class == "Demon Hunter" then
+            class = "DEMONHUNTER"
+        elseif class == "Death Knight" then
+            class = "DEATHKNIGHT"
+        end
+        color = RAID_CLASS_COLORS[string.upper(class)]
+    end
+    local cc = color or {colorStr = 'ffff0000'}
+    
+    -- Rename existing playername to one with realm
+    if raid_skipper_db[playerName] ~= nil and raid_skipper_db[playerRealm] == nil then 
+        raid_skipper_db[playerRealm] = raid_skipper_db[playerName];
+        raid_skipper_db[playerName] = nil;
+    end
+
+    if raid_skipper_db[playerRealm] == nil or raid_skipper_db[playerRealm]["version"] == nil then
+        raid_skipper_db[playerRealm] = {
+            ["version"] = 110,
+            ["class"] = class,
+            ["color"] = cc.colorStr,
+            ["raids"] = { }
+        }
+    end
+
+    raid_skipper_db[playerRealm]["raids"][raid .. " - " .. skip] = {
+        ["name"] = raid,
+        ["status"] = status,
+        ["difficulty"] = skip
+    }   
+end
+
+local function showMySkips()
+    for char, values in pairs(raid_skipper_db) do
+        local color = values.color;
+        print("\124c" .. color .. char)
+        for raid, info in pairs(values.raids) do
+            local status_color = "ffffff00";
+            if info.status == "Complete" then
+                status_color = "ff00ff00"
+            end
+            print("     \124c" .. status_color .. "- " .. info.name .. " - " .. info.difficulty .. " (" .. info.status .. ")")
+        end
+    end
+end
+
 -- UTILITY FUNCTIONS
 
 RaidSkipper.TextColor = function(color, msg)
@@ -57,11 +116,13 @@ local function ShowQuestProgress(id)
     return fulfilled .. "/" .. required
 end
 
-local function ShowQuestInfo(id, difficulty)
+local function ShowQuestInfo(id, difficulty, raidName)
     if (IsQuestComplete(id)) then
         -- Player has completed this quest
+        saveSkip(raidName, difficulty, "Complete")
         return RaidSkipper.TextColor(COMPLETE, difficulty)
     elseif (IsQuestInQuestLog(id)) then
+        saveSkip(raidName, difficulty, "In Progress " .. ShowQuestProgress(id))
         -- Player has this quest in their quest log
         return RaidSkipper.TextColor(IN_PROGRESS, difficulty .. " " .. ShowQuestProgress(id))
     else
@@ -91,13 +152,13 @@ local function ShowRaidSkip(raid)
         end
     else
         -- Mythic
-        line = line .. ShowQuestInfo(raid.mythicId, PLAYER_DIFFICULTY6)
+        line = line .. ShowQuestInfo(raid.mythicId, PLAYER_DIFFICULTY6, GetRealZoneText(raid.instanceId))
         -- Heroic, if Mythic is complete Heroic and Normal can be skipped
         if (not IsQuestComplete(raid.mythicId) and raid.heroicId ~= nil) then
-            line = line .. " " .. ShowQuestInfo(raid.heroicId, PLAYER_DIFFICULTY2)
+            line = line .. " " .. ShowQuestInfo(raid.heroicId, PLAYER_DIFFICULTY2, GetRealZoneText(raid.instanceId))
             -- Normal, if Heroic is complete Normal can be skipped
             if (not IsQuestComplete(raid.heroicId) and raid.normalId ~= nil) then
-                line = line .. " " .. ShowQuestInfo(raid.normalId, PLAYER_DIFFICULTY1)
+                line = line .. " " .. ShowQuestInfo(raid.normalId, PLAYER_DIFFICULTY1, GetRealZoneText(raid.instanceId))
             end
         end
     end
@@ -133,6 +194,7 @@ local function PrintHelp()
     RaidSkipper:Print("  /rs bfa --> Battle for Azeroth")
     RaidSkipper:Print("  /rs sl --> Shadowlands")
     RaidSkipper:Print("  /rs df --> Dragonflight")
+    RaidSkipper:Print("  /rs list --> List my chars status")
 end
 
 local function ShowRaidInstanceById(id)
@@ -189,6 +251,8 @@ function SlashHandler(args)
             ShowExpansion(RaidSkipper.raid_skip_quests[4])
         elseif arg1 == "df" then
             ShowExpansion(RaidSkipper.raid_skip_quests[5])
+        elseif arg1 == "list" then
+            showMySkips()
         else
             PrintHelp()
         end

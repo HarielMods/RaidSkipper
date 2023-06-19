@@ -1,5 +1,8 @@
 # Raid Skipper
 
+### 1.0.19
+* Added new command **list** to show current status of all chars
+
 ### 1.0.18
 * Turns out Skylli202's raid ids for DF were right the first time.
 
