@@ -4,8 +4,8 @@ local _, RaidSkipper = ...
 -- https://wowpedia.fandom.com/wiki/InstanceID#Raids
 
 RaidSkipper.raid_skip_quests = {
-    {
-        name = EXPANSION_NAME5,
+    [EXPANSION_NAME5] = {
+        name = EXPANSION_NAME5, -- "Warlords of Draenor"
         raids = {
             --Blackrock Foundary
             { instanceId = 1205,  mythicId = 37031, heroicId = 37030, normalId = 37029 },
@@ -15,8 +15,8 @@ RaidSkipper.raid_skip_quests = {
             { instanceId = 1448, mythicId = 39505, heroicId = 39504, normalId = 39502 }
         }
     },
-    {
-        name = EXPANSION_NAME6,
+    [EXPANSION_NAME6] = {
+        name = EXPANSION_NAME6, -- "Legion"
         raids = {
             --The Emerald Nightmare
             { instanceId = 1520, mythicId = 44285, heroicId = 44284, normalId = 44283 },
@@ -30,8 +30,8 @@ RaidSkipper.raid_skip_quests = {
             { instanceId = 1712, mythicId = 49135, heroicId = 49134, normalId = 49133 }
         }
     },
-    {
-        name = EXPANSION_NAME7,
+    [EXPANSION_NAME7] = {
+        name = EXPANSION_NAME7, -- "Battle for Azeroth"
         raids = {
             --Battle of Dazar'alor
             { instanceId = 2070, achievementId = 13314, mythicId = 316476 },
@@ -39,8 +39,8 @@ RaidSkipper.raid_skip_quests = {
             { instanceId = 2217, mythicId = 58375, heroicId = 58374, normalId = 58373 }
         }
     },
-    {
-        name = EXPANSION_NAME8,
+    [EXPANSION_NAME8] = {
+        name = EXPANSION_NAME8, -- "Shadowlands"
         raids = {
             --Castle Nathria
             { instanceId = 2296, mythicId = 62056, heroicId = 62055, normalId = 62054 },
@@ -50,8 +50,8 @@ RaidSkipper.raid_skip_quests = {
             { instanceId = 2481, mythicId = 65762, heroicId = 65763, normalId = 65764 }
         }
     },
-    {
-        name = EXPANSION_NAME9,
+    [EXPANSION_NAME9] = {
+        name = EXPANSION_NAME9, -- "Dragonflight"
         raids = {
             --Vault of the Incarnates
             { instanceId = 2522, mythicId = 71020, heroicId = 71019, normalId = 71018 },
