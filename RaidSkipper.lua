@@ -36,11 +36,10 @@ local questsInProgress = {}
 local DBVERSION = 110
 
 if raid_skipper_db == nil then
-    raid_skipper_db = { }
+    raid_skipper_db = {}
 end
 
 local function saveSkip2(expansionName, instanceId)
-    
     -- update whole instance or expansion?
     -- local questTitle = C_QuestLog.GetTitleForQuestID(questId)
     -- local questStatus = RaidSkipper.getRaidStatus()
@@ -58,8 +57,6 @@ local function saveSkip2(expansionName, instanceId)
     --         questTitle .. "" .. questStatus
     --     )
     -- end
-
-    
 end
 
 local function saveSkip(playerRealm, raid, skip, status)
@@ -77,7 +74,7 @@ local function saveSkip(playerRealm, raid, skip, status)
         end
         color = RAID_CLASS_COLORS[string.upper(class)]
     end
-    local cc = color or {colorStr = 'ffff0000'}
+    local cc = color or { colorStr = 'ffff0000' }
 
     -- Rename existing playername to one with realm
     if raid_skipper_db[playerName] ~= nil and raid_skipper_db[playerRealm] == nil then
@@ -90,7 +87,7 @@ local function saveSkip(playerRealm, raid, skip, status)
             ["version"] = DBVERSION,
             ["class"] = class,
             ["color"] = cc.colorStr,
-            ["raids"] = { }
+            ["raids"] = {}
         }
     end
 
@@ -131,27 +128,27 @@ local function populatePlayerDb()
                 ["version"] = DBVERSION,
                 ["skips"] = {
                     [EXPANSION_NAME5] = { -- "Warlords of Draenor"
-                        ["1205"] = {}, -- Blackrock Foundary
-                        ["1448"] = {}, -- Hellfire Citadel (lower and upper)
+                        ["1205"] = {},    -- Blackrock Foundary
+                        ["1448"] = {},    -- Hellfire Citadel (lower and upper)
                     },
                     [EXPANSION_NAME6] = { -- "Legion"
-                        ["1520"] = {}, -- The Emerald Nightmare
-                        ["1530"] = {}, -- The Nighthold
-                        ["1676"] = {}, -- Tomb of Sargeras
-                        ["1712"] = {}, -- Antorus, The Burning Throne (lower and upper)
+                        ["1520"] = {},    -- The Emerald Nightmare
+                        ["1530"] = {},    -- The Nighthold
+                        ["1676"] = {},    -- Tomb of Sargeras
+                        ["1712"] = {},    -- Antorus, The Burning Throne (lower and upper)
                     },
                     [EXPANSION_NAME7] = { -- "Battle for Azeroth"
-                        ["2070"] = {}, -- Battle of Dazar'alor
-                        ["2217"] = {}, -- Ny'alotha, the Waking City
+                        ["2070"] = {},    -- Battle of Dazar'alor
+                        ["2217"] = {},    -- Ny'alotha, the Waking City
                     },
                     [EXPANSION_NAME8] = { -- "Shadowlands"
-                        ["2296"] = {}, -- Castle Nathria
-                        ["2450"] = {}, -- Sanctum of Domination
-                        ["2481"] = {}, -- Sepulcher of the First Ones
+                        ["2296"] = {},    -- Castle Nathria
+                        ["2450"] = {},    -- Sanctum of Domination
+                        ["2481"] = {},    -- Sepulcher of the First Ones
                     },
                     [EXPANSION_NAME9] = { -- "Dragonflight"
-                        ["2522"] = {}, -- Vault of the Incarnates
-                        ["2569"] = {}, -- Aberrus, the Shadowed Crucible
+                        ["2522"] = {},    -- Vault of the Incarnates
+                        ["2569"] = {},    -- Aberrus, the Shadowed Crucible
                     }
                 }
             }
@@ -174,15 +171,17 @@ local function populatePlayerDb()
                     saveSkip2(expansion, raid.instanceId, raid.normalId, COMPLETE)
                 end
 
-                if (RaidSkipper.isQuestInQuestLog(raid.mythicId)) then
-                    saveSkip2(expansion, raid.instanceId, raid.mythicId, IN_PROGRESS .. " " .. RaidSkipper.getQuestProgress(raid.mythicId))
-                elseif (RaidSkipper.isQuestInQuestLog(raid.heroicId)) then
-                    saveSkip2(expansion, raid.instanceId, raid.heroicId, IN_PROGRESS .. " " .. RaidSkipper.getQuestProgress(raid.heroicId))
-                elseif (RaidSkipper.isQuestInQuestLog(raid.normalId)) then
-                    saveSkip2(expansion, raid.instanceId, raid.normalId, IN_PROGRESS .. " " .. RaidSkipper.getQuestProgress(raid.normalId))
-                end
+                -- if (RaidSkipper.isQuestInQuestLog(raid.mythicId)) then
+                --     saveSkip2(expansion, raid.instanceId, raid.mythicId,
+                --         IN_PROGRESS .. " " .. RaidSkipper.getQuestProgress(raid.mythicId))
+                -- elseif (RaidSkipper.isQuestInQuestLog(raid.heroicId)) then
+                --     saveSkip2(expansion, raid.instanceId, raid.heroicId,
+                --         IN_PROGRESS .. " " .. RaidSkipper.getQuestProgress(raid.heroicId))
+                -- elseif (RaidSkipper.isQuestInQuestLog(raid.normalId)) then
+                --     saveSkip2(expansion, raid.instanceId, raid.normalId,
+                --         IN_PROGRESS .. " " .. RaidSkipper.getQuestProgress(raid.normalId))
+                -- end
             end
-            
         end
     end
 end
@@ -210,7 +209,7 @@ local function initDb()
     -- populate db values
     RaidSkipper.populatePlayerDb()
 
-    -- Rename existing playername to one with realm 
+    -- Rename existing playername to one with realm
     -- (migrate to db version 110)
     -- if raid_skipper_db[PLAYER_NAME] ~= nil and raid_skipper_db[playerRealm] == nil then
     --     raid_skipper_db[playerRealm] = raid_skipper_db[PLAYER_NAME]
@@ -234,8 +233,9 @@ local function showMySkips()
         local classColor = values.color;
         RaidSkipper:print("\124c" .. classColor .. char)
         for raid, info in pairs(values.raids) do
-            local statusText = RaidSkipper.getColorText((info.status == "Complete" and COMPLETE or IN_PROGRESS), info.status)
-            RaidSkipper:print("     " .. info.name .. " - " .. info.difficulty .." - (" .. statusText .. ")")
+            local statusText = RaidSkipper.getColorText((info.status == "Complete" and COMPLETE or IN_PROGRESS),
+                info.status)
+            RaidSkipper:print("     " .. info.name .. " - " .. info.difficulty .. " - (" .. statusText .. ")")
         end
     end
 end
@@ -245,7 +245,7 @@ end
 -- UTILITY FUNCTIONS
 
 RaidSkipper.print = function(self, msg)
-    print(self.friendlyAddonName .. ": " .. msg)
+    print(friendlyAddonName .. ": " .. msg)
 end
 
 local function hasValue(tbl, value)
@@ -283,9 +283,10 @@ end
 
 local function isAchievementComplete(id)
     if (id ~= nil) then
-        local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(id)
+        local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic =
+            GetAchievementInfo(id)
         -- return completed
-        return {completed, wasEarnedByMe}
+        return { completed, wasEarnedByMe }
     else
         return nil
     end
@@ -335,10 +336,14 @@ end
 
 local function showAchievementInfo(achievementId)
     if achievementId then
-        local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(id)
+        local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic =
+            GetAchievementInfo(id)
         RaidSkipper:print("Achievment: " .. name)
-        local output = "Account: " .. (completed and RaidSkipper.getColorText(COMPLETE, "Complete") or RaidSkipper.getColorText(INCOMPLETE, "Incomplete"))
-        output = output .. " Character: " .. (wasEarnedByMe and RaidSkipper.getColorText(COMPLETE, "Complete") or RaidSkipper.getColorText(INCOMPLETE, "Incomplete"))
+        local output = "Account: " ..
+            (completed and RaidSkipper.getColorText(COMPLETE, "Complete") or RaidSkipper.getColorText(INCOMPLETE, "Incomplete"))
+        output = output ..
+            " Character: " ..
+            (wasEarnedByMe and RaidSkipper.getColorText(COMPLETE, "Complete") or RaidSkipper.getColorText(INCOMPLETE, "Incomplete"))
         RaidSkipper:print(output)
     end
 end
@@ -361,7 +366,8 @@ local function showRaidSkip(raid)
             output = output .. " " .. getQuestInfo(raid.heroicId, PLAYER_DIFFICULTY2, GetRealZoneText(raid.instanceId))
             -- Normal, if Heroic is complete Normal can be skipped
             if (not isQuestComplete(raid.heroicId) and raid.normalId ~= nil) then
-                output = output .. " " .. getQuestInfo(raid.normalId, PLAYER_DIFFICULTY1, GetRealZoneText(raid.instanceId))
+                output = output ..
+                    " " .. getQuestInfo(raid.normalId, PLAYER_DIFFICULTY1, GetRealZoneText(raid.instanceId))
             end
         end
     end
@@ -411,25 +417,56 @@ local function showRaidInstanceById(id)
     end
 end
 
-local function InRaid() 
+local function inRaid()
     local instanceType = select(2, GetInstanceInfo())
     return instanceType == "raid"
 end
 
-local function OnChangeZone()
-    local in_raid = InRaid()
+local function onChangeZone()
+    local in_raid = inRaid()
     local instanceID = select(8, GetInstanceInfo())
     if in_raid then
         showRaidInstanceById(instanceID)
     end
 end
 
-local function ShowCurrentRaid() 
+local function showCurrentRaid()
     local instanceID = select(8, GetInstanceInfo())
     showRaidInstanceById(instanceID)
 end
 
+-- new functions
+local function showQuestsForCurrentPlayer()
+    for expansionName, expansion in pairs(RaidSkipper.data) do
+        RaidSkipper:print(expansionName)
 
+        if expansion["achievements"] ~= nil then
+            for achievementIndex, achievementId in pairs(expansion["achievements"]) do
+                local completed, wasEarnedByMe = isAchievementComplete(achievementId)
+                if completed then
+                    RaidSkipper:print("Achievement Completed")
+                end
+            end
+        end
+
+        if expansion["quests"] ~= nil then
+            for questIndex, questId in ipairs(expansion["quests"]) do
+                local completed = isQuestComplete(questId)
+                local inProgress = isQuestInQuestLog(questId)
+                if (completed) then
+                    local title = C_QuestLog.GetTitleForQuestID(questId) or "Unknown"
+                    RaidSkipper:print(title .. " (" .. COMPLETE .. ")")
+                elseif (inProgress) then
+                    local title = C_QuestLog.GetTitleForQuestID(questId) or "Unknown"
+                    RaidSkipper:print(title .. " (" .. IN_PROGRESS .. " " .. getQuestProgress(questId) .. ")")
+                else
+                    local title = C_QuestLog.GetTitleForQuestID(questId) or "Unknown"
+                    RaidSkipper:print(title .. " (" .. INCOMPLETE .. ")")
+                end
+            end
+        end
+    end
+end
 
 -- ----------------------------------------------------------------------------------------------------
 
@@ -439,14 +476,13 @@ local function saveAllSkips()
         print("checking expansion: " .. expansion.name)
 
         for raidIndex, raid in ipairs(expansion.raids) do
-
             print("checking raid: " .. GetRealZoneText(raid.instanceId))
             if raid.instanceId == BATTLE_OF_DAZAR_ALOR_INSTANCE_ID then
                 -- skip dazar'alor
                 print("skipping: " .. GetRealZoneText(raid.instanceId))
             else
                 -- add exception for Dazar'Alor/SOO
-          
+
                 local raidName = GetRealZoneText(raid.instanceId)
 
                 local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
@@ -454,9 +490,10 @@ local function saveAllSkips()
                 local statuses = {}
                 for i, questId in ipairs(questIds) do
                     if isQuestComplete(questId) then
-                        table.insert(statuses, {[difficulties[i] .. "Status"] = "Complete"})
+                        table.insert(statuses, { [difficulties[i] .. "Status"] = "Complete" })
                     elseif isQuestInQuestLog(questId) then
-                        table.insert(statuses, {[difficulties[i] .. "Status"] = "(In Progress " .. getQuestProgress(questId) .. ")"})
+                        table.insert(statuses,
+                            { [difficulties[i] .. "Status"] = "(In Progress " .. getQuestProgress(questId) .. ")" })
                     end
                 end
 
@@ -507,17 +544,17 @@ local function SlashHandler(msg, editBox)
     local command, ext = strsplit(" ", msg)
 
     if command then
-        
         -- print("RS: command: " .. command)
-        
+
         -- Show specific raids
         if command == "" then
+            showQuestsForCurrentPlayer()
             -- No arguments were passed in
-            if InRaid() then
-                ShowCurrentRaid()
-            else
-                showExpansions()
-            end
+            -- if inRaid() then
+            --     showCurrentRaid()
+            -- else
+            --     showExpansions()
+            -- end
         elseif command == "save" or command == "update" then
             RaidSkipper.populatePlayerDb()
         elseif command == "help" then
@@ -553,7 +590,7 @@ end
 function RaidSkipper.Frame:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
     -- print(event, isLogin, isReload)
     -- TODO: Initialize saved vars
-    initDb()
+    -- initDb()
 end
 
 function RaidSkipper.Frame:PLAYER_LEAVING_WORLD(event)
@@ -562,11 +599,11 @@ function RaidSkipper.Frame:PLAYER_LEAVING_WORLD(event)
 end
 
 function RaidSkipper.Frame:QUEST_WATCH_UPDATE(event)
-    
+
 end
 
 function RaidSkipper.Frame:ZONE_CHANGED_NEW_AREA(event)
-    OnChangeZone()
+    onChangeZone()
 end
 
 RaidSkipper.Frame:RegisterEvent("ADDON_LOADED")

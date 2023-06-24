@@ -3,16 +3,48 @@ local _, RaidSkipper = ...
 -- Raid IDs obtained from:
 -- https://wowpedia.fandom.com/wiki/InstanceID#Raids
 
+
+RaidSkipper.data = {
+    [EXPANSION_NAME5] = {
+        quests = { 37031, 37030, 37029, 39501, 39500, 39499, 39505, 39504, 39502 }
+    },
+    [EXPANSION_NAME6] = {
+        quests = { 44285, 44284, 44283, 45383, 45382, 45381, 47727, 47726, 47725, 49076, 49075, 49032, 49135, 49134,
+            49133 }
+    },
+    [EXPANSION_NAME7] = {
+        quests = { 58375, 58374, 58373 },
+        achievements = { 13314 },
+
+    },
+    [EXPANSION_NAME8] = {
+        quests = { 62056, 62055, 62054, 64599, 64598, 64597, 65762, 65763, 65764 }
+    },
+    [EXPANSION_NAME9] = {
+        quests = { 71020, 71019, 71018, 76086, 76085, 76083 }
+    },
+};
+
 RaidSkipper.raid_skip_quests = {
     [EXPANSION_NAME5] = {
         name = EXPANSION_NAME5, -- "Warlords of Draenor"
         raids = {
             --Blackrock Foundary
-            { instanceId = 1205,  mythicId = 37031, heroicId = 37030, normalId = 37029 },
+            { instanceId = 1205, mythicId = 37031, heroicId = 37030, normalId = 37029 },
             --Hellfire Citadel Lower
             { instanceId = 1448, mythicId = 39501, heroicId = 39500, normalId = 39499 },
             --Hellfire Citadel Upper
-            { instanceId = 1448, mythicId = 39505, heroicId = 39504, normalId = 39502 }
+            { instanceId = 1448, mythicId = 39505, heroicId = 39504, normalId = 39502 },
+
+            [1205] = { -- Blackrock Foundary
+                instanceId = 1205,
+                quests = { 37031, 37030, 37029 }
+            },
+
+            [1448] = { -- Hellfire Citadel Upper
+                instanceId = 1448,
+                quests = { 39501, 39500, 39499, 39505, 39504, 39502 }
+            },
         }
     },
     [EXPANSION_NAME6] = {
@@ -36,7 +68,7 @@ RaidSkipper.raid_skip_quests = {
             --Battle of Dazar'alor
             { instanceId = 2070, achievementId = 13314, mythicId = 316476 },
             --Ny'alotha, the Waking City
-            { instanceId = 2217, mythicId = 58375, heroicId = 58374, normalId = 58373 }
+            { instanceId = 2217, mythicId = 58375,      heroicId = 58374, normalId = 58373 }
         }
     },
     [EXPANSION_NAME8] = {
@@ -60,4 +92,3 @@ RaidSkipper.raid_skip_quests = {
         }
     }
 }
-
