@@ -468,6 +468,47 @@ local function showQuestsForCurrentPlayer()
     end
 end
 
+local function printQuestStatus(obj, index)
+    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
+    if type(obj) == "table" then
+        for i, o in ipairs(obj) do
+            printQuestStatus(o, i)
+        end
+    else
+        local completed = isQuestComplete(obj)
+        local inProgress = isQuestInQuestLog(obj)
+        if completed then
+            RaidSkipper:print("        " .. difficulties[index] .. " (" .. COMPLETE .. ")")
+        elseif inProgress then
+            RaidSkipper:print("        " .. difficulties[index] .. " (" .. IN_PROGRESS.. ")")
+        end
+    end
+end
+
+local function showRaidSkipStatus()
+    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
+    for expansionName, expansion in pairs(RaidSkipper.data2) do
+        RaidSkipper:print(expansionName)
+
+        for raidId, raid in pairs(expansion) do
+            RaidSkipper:print("    " .. GetRealZoneText(raidId))
+            for index, questOrQuests in ipairs(raid) do
+                -- local title = C_QuestLog.GetTitleForQuestID(questId) or "Unknown"
+                -- RaidSkipper:print("        " .. title)
+                printQuestStatus(questOrQuests, index)
+                -- if (type(questIdorquests) == "table") then
+                --     for i, quests in questIdorquests do
+                        
+                --     end
+                -- else
+                --     RaidSkipper:print("        " .. difficulties[index])
+                -- end
+            end
+        end
+    end
+end
+
+
 -- ----------------------------------------------------------------------------------------------------
 
 local function saveAllSkips()
@@ -548,7 +589,8 @@ local function SlashHandler(msg, editBox)
 
         -- Show specific raids
         if command == "" then
-            showQuestsForCurrentPlayer()
+            showRaidSkipStatus()
+            -- showQuestsForCurrentPlayer()
             -- No arguments were passed in
             -- if inRaid() then
             --     showCurrentRaid()

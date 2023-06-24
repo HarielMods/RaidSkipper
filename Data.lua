@@ -3,6 +3,37 @@ local _, RaidSkipper = ...
 -- Raid IDs obtained from:
 -- https://wowpedia.fandom.com/wiki/InstanceID#Raids
 
+RaidSkipper.data2 = {
+    [EXPANSION_NAME5] = { -- Warlords of Draenor
+        [1205] = {
+            37031, 37030, 37029
+        },
+        [1448] = {
+            {39501, 39500, 39499},
+            {39505, 39504, 39502},
+        },
+    },
+    [EXPANSION_NAME6] = { -- Legion
+        [1520] = {44285, 44284, 44283}, -- The Emerald Nightmare
+        [1530] = {45383, 45382, 45381}, -- The Nighthold
+        [1676] = {47727, 47726, 47725}, -- Tomb of Sargeras
+        [1712] = { -- Antorus, The Burning Throne Upper
+            {49076, 49075, 49032}, -- Antorus, The Burning Throne Lower
+            {49135, 49134, 49133}
+        },
+    },
+    -- [EXPANSION_NAME7] = {
+    --     quests = { 58375, 58374, 58373 },
+    --     achievements = { 13314 },
+
+    -- },
+    -- [EXPANSION_NAME8] = {
+    --     quests = { 62056, 62055, 62054, 64599, 64598, 64597, 65762, 65763, 65764 }
+    -- },
+    -- [EXPANSION_NAME9] = {
+    --     quests = { 71020, 71019, 71018, 76086, 76085, 76083 }
+    -- },
+};
 
 RaidSkipper.data = {
     [EXPANSION_NAME5] = {
