@@ -23,11 +23,12 @@ local BATTLE_OF_DAZAR_ALOR_INSTANCE_ID = 2070
 
 
 -- Current character info
-local PLAYER_NAME = ""
-local PLAYER_CLASS_NAME = ""
-local PLAYER_CLASS_FILENAME = ""
+local PLAYER_NAME = nil
+local PLAYER_CLASS_NAME = nil
+local PLAYER_CLASS_FILENAME = nil
 local PLAYER_CLASS_ID = nil
-local REALM_NAME = ""
+local PLAYER_CLASS_COLOR = nil
+local REALM_NAME = nil
 
 local questsInProgress = {}
 
@@ -480,34 +481,32 @@ local function printQuestStatus(obj, index)
         if completed then
             RaidSkipper:print("        " .. difficulties[index] .. " (" .. COMPLETE .. ")")
         elseif inProgress then
-            RaidSkipper:print("        " .. difficulties[index] .. " (" .. IN_PROGRESS.. ")")
+            local status = IN_PROGRESS .. getQuestProgress(obj)
+            RaidSkipper:print("        " .. difficulties[index] .. " (" .. status .. ")")
         end
     end
 end
 
 local function showRaidSkipStatus()
-    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
     for expansionName, expansion in pairs(RaidSkipper.data2) do
         RaidSkipper:print(expansionName)
-
         for raidId, raid in pairs(expansion) do
-            RaidSkipper:print("    " .. GetRealZoneText(raidId))
-            for index, questOrQuests in ipairs(raid) do
-                -- local title = C_QuestLog.GetTitleForQuestID(questId) or "Unknown"
-                -- RaidSkipper:print("        " .. title)
-                printQuestStatus(questOrQuests, index)
-                -- if (type(questIdorquests) == "table") then
-                --     for i, quests in questIdorquests do
-                        
-                --     end
-                -- else
-                --     RaidSkipper:print("        " .. difficulties[index])
-                -- end
+            if raidId ~= 2070 then -- skipping Battle of Dazr'Alor for now
+                RaidSkipper:print("    " .. GetRealZoneText(raidId))
+                for index, questOrQuests in ipairs(raid) do
+                    printQuestStatus(questOrQuests, index)
+                end
             end
         end
     end
 end
 
+local function init()
+    PLAYER_NAME = UnitName("player")
+    REALM_NAME = GetRealmName()
+    PLAYER_CLASS_NAME, PLAYER_CLASS_FILENAME, PLAYER_CLASS_ID = UnitClass(PLAYER_NAME)
+    PLAYER_CLASS_COLOR = GetClassColor(PLAYER_CLASS_FILENAME)
+end
 
 -- ----------------------------------------------------------------------------------------------------
 
@@ -632,7 +631,7 @@ end
 function RaidSkipper.Frame:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
     -- print(event, isLogin, isReload)
     -- TODO: Initialize saved vars
-    -- initDb()
+    init()
 end
 
 function RaidSkipper.Frame:PLAYER_LEAVING_WORLD(event)
@@ -641,7 +640,8 @@ function RaidSkipper.Frame:PLAYER_LEAVING_WORLD(event)
 end
 
 function RaidSkipper.Frame:QUEST_WATCH_UPDATE(event)
-
+    -- if any of our questIds are in progress then
+    --     update current character data
 end
 
 function RaidSkipper.Frame:ZONE_CHANGED_NEW_AREA(event)
