@@ -507,7 +507,7 @@ local function getQuestStatus(questId, difficulty)
     if completed then
         return difficulty .. " (" .. COMPLETE .. ")"
     elseif inProgress then
-        local status = IN_PROGRESS .. getQuestProgress(questId)
+        local status = IN_PROGRESS .. " " .. getQuestProgress(questId)
         return difficulty .. " (" .. status .. ")"
     end
 end
@@ -561,6 +561,52 @@ local function savePlayerSkips()
     end
 
     raid_skipper_db[REALM_NAME][PLAYER_NAME] = playerObj
+    RaidSkipper:print("character data saved")
+end
+
+local function printAccountSkips()
+
+    for realmIndex, realm in ipairs(raid_skipper_db) do
+        RaidSkipper:print(realm)
+        for charIndex, char in ipairs(realm) do
+            RaidSkipper:print(char)
+            local classFilename = char["classFilename"]
+            local classColor = GetClassColor(classFilename)
+
+            -- do this for the correct order
+            local exps = {
+                EXPANSION_NAME5,
+                EXPANSION_NAME6,
+                EXPANSION_NAME7,
+                EXPANSION_NAME8,
+                EXPANSION_NAME9,
+            }
+
+            for i, exp in ipairs(exps) do
+                local output = ""
+                -- RaidSkipper:print(exp)
+                
+                -- loop raids
+
+                    -- loops quests
+            end
+
+            for raidId, data in pairs(char.data) do
+                RaidSkipper:print(GetRealZoneText(tonumber(raidId)))
+
+            end
+        end
+    end
+
+    for char, values in pairs(raid_skipper_db) do
+        local classColor = values.color;
+        RaidSkipper:print("\124c" .. classColor .. char)
+        for raid, info in pairs(values.raids) do
+            local statusText = RaidSkipper.getColorText((info.status == "Complete" and COMPLETE or IN_PROGRESS),
+                info.status)
+            RaidSkipper:print("     " .. info.name .. " - " .. info.difficulty .. " - (" .. statusText .. ")")
+        end
+    end
 end
 
 local function init()
@@ -568,6 +614,14 @@ local function init()
     REALM_NAME = GetRealmName()
     PLAYER_CLASS_NAME, PLAYER_CLASS_FILENAME, PLAYER_CLASS_ID = UnitClass(PLAYER_NAME)
     PLAYER_CLASS_COLOR = GetClassColor(PLAYER_CLASS_FILENAME)
+
+    -- delete old data model
+    if raid_skipper_db[PLAYER_NAME .. "-" .. REALM_NAME] ~= nil then
+        raid_skipper_db[PLAYER_NAME .. "-" .. REALM_NAME] = nil
+    end
+    if raid_skipper_db[PLAYER_NAME] ~= nil then
+        raid_skipper_db[PLAYER_NAME] = nil
+    end
 end
 
 -- ----------------------------------------------------------------------------------------------------
