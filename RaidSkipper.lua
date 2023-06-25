@@ -481,7 +481,7 @@ local function printQuestStatus(obj, index)
         if completed then
             RaidSkipper:print("        " .. difficulties[index] .. " (" .. COMPLETE .. ")")
         elseif inProgress then
-            local status = IN_PROGRESS .. getQuestProgress(obj)
+            local status = IN_PROGRESS .. " " .. getQuestProgress(obj)
             RaidSkipper:print("        " .. difficulties[index] .. " (" .. status .. ")")
         end
     end
@@ -499,6 +499,68 @@ local function showRaidSkipStatus()
             end
         end
     end
+end
+
+local function getQuestStatus(questId, difficulty)
+    local completed = isQuestComplete(questId)
+    local inProgress = isQuestInQuestLog(questId)
+    if completed then
+        return difficulty .. " (" .. COMPLETE .. ")"
+    elseif inProgress then
+        local status = IN_PROGRESS .. getQuestProgress(questId)
+        return difficulty .. " (" .. status .. ")"
+    end
+end
+
+local function getRaidStatuses(numOrTable, raidId, index)
+    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
+    local raidObj = {}
+    if type(numOrTable) == "table" then
+        for i, obj in ipairs(numOrTable) do
+            local result = getRaidStatuses(obj, raidId, i)
+            if result ~= nil then
+                table.insert(raidObj, result)
+            end
+        end
+        return raidObj
+    else
+    -- should be questId
+        local status = getQuestStatus(numOrTable, difficulties[index])
+        if status ~= nil then
+            return GetRealZoneText(raidId) .. " " .. status
+        end
+    end
+    return nil
+end
+
+local function savePlayerSkips()
+    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
+
+    local playerObj = {
+        classFilename = PLAYER_CLASS_FILENAME,
+        data = {},
+    }
+    for expansionName, expansion in pairs(RaidSkipper.data2) do
+        playerObj["data"][expansionName] = {}
+        for raidId, raid in pairs(expansion) do
+            if raidId ~= 2070 then -- skipping Battle of Dazr'Alor for now
+                playerObj["data"][expansionName][raidId] = {}
+                local raidObj = getRaidStatuses(raid, raidId, 0)
+                if raidObj ~= nil then
+                    table.insert(playerObj["data"][expansionName][raidId], raidObj)
+                end
+            end
+        end
+    end
+
+    if raid_skipper_db[REALM_NAME] == nil then
+        raid_skipper_db[REALM_NAME] = {}
+        raid_skipper_db[REALM_NAME][PLAYER_NAME] = {}
+    elseif raid_skipper_db[REALM_NAME][PLAYER_NAME] == nil then
+        raid_skipper_db[REALM_NAME][PLAYER_NAME] = {}
+    end
+
+    raid_skipper_db[REALM_NAME][PLAYER_NAME] = playerObj
 end
 
 local function init()
@@ -575,29 +637,14 @@ local function saveAllSkips()
 end
 
 local function SlashHandler(msg, editBox)
-    -- local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
-
-    print("RS: SlashHandler: msg: " .. msg)
-
-    -- local command, ext = msg:match("^(%S*)%s(.-)$")
-
     local command, ext = strsplit(" ", msg)
 
     if command then
-        -- print("RS: command: " .. command)
-
         -- Show specific raids
         if command == "" then
             showRaidSkipStatus()
-            -- showQuestsForCurrentPlayer()
-            -- No arguments were passed in
-            -- if inRaid() then
-            --     showCurrentRaid()
-            -- else
-            --     showExpansions()
-            -- end
         elseif command == "save" or command == "update" then
-            RaidSkipper.populatePlayerDb()
+            savePlayerSkips()
         elseif command == "help" then
             printHelp()
         elseif command == "list" then
