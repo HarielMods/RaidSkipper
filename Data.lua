@@ -11,8 +11,8 @@ RaidSkipper.data2 = {
     [EXPANSION_NAME5] = {                 -- Warlords of Draenor
         [1205] = { 37031, 37030, 37029 }, -- Blackrock Foundary
         [1448] = {                        -- Hellfire Citadel
-            { 39501, 39500, 39499 },
-            { 39505, 39504, 39502 },
+            ["Lower"] = { 39501, 39500, 39499 },
+            ["Upper"] = { 39505, 39504, 39502 },
         },
     },
     [EXPANSION_NAME6] = {                 -- Legion
@@ -20,8 +20,8 @@ RaidSkipper.data2 = {
         [1530] = { 45383, 45382, 45381 }, -- The Nighthold
         [1676] = { 47727, 47726, 47725 }, -- Tomb of Sargeras
         [1712] = {
-            { 49076, 49075, 49032 },      -- Antorus, The Burning Throne Lower
-            { 49135, 49134, 49133 },      -- Antorus, The Burning Throne Upper
+            ["Lower"] = { 49076, 49075, 49032 },      -- Antorus, The Burning Throne Lower
+            ["Upper"] = { 49135, 49134, 49133 },      -- Antorus, The Burning Throne Upper
         },
     },
     [EXPANSION_NAME7] = {                 -- Battle for Azeroth
