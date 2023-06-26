@@ -9,34 +9,34 @@ local _, RaidSkipper = ...
 
 RaidSkipper.data2 = {
     [EXPANSION_NAME5] = {                 -- Warlords of Draenor
-        [1205] = { 37031, 37030, 37029 }, -- Blackrock Foundary
+        [1205] = { ["full"] = {37031, 37030, 37029} }, -- Blackrock Foundary
         [1448] = {                        -- Hellfire Citadel
             ["Lower"] = { 39501, 39500, 39499 },
             ["Upper"] = { 39505, 39504, 39502 },
         },
     },
     [EXPANSION_NAME6] = {                 -- Legion
-        [1520] = { 44285, 44284, 44283 }, -- The Emerald Nightmare
-        [1530] = { 45383, 45382, 45381 }, -- The Nighthold
-        [1676] = { 47727, 47726, 47725 }, -- Tomb of Sargeras
+        [1520] = { ["full"] = {44285, 44284, 44283} }, -- The Emerald Nightmare
+        [1530] = { ["full"] = {45383, 45382, 45381} }, -- The Nighthold
+        [1676] = { ["full"] = {47727, 47726, 47725} }, -- Tomb of Sargeras
         [1712] = {
             ["Lower"] = { 49076, 49075, 49032 },      -- Antorus, The Burning Throne Lower
             ["Upper"] = { 49135, 49134, 49133 },      -- Antorus, The Burning Throne Upper
         },
     },
     [EXPANSION_NAME7] = {                 -- Battle for Azeroth
-        [2070] = { achievement = 13314 }, -- Battle of Dazar'alor
-        [2217] = { 58375, 58374, 58373 }, -- Ny'alotha, the Waking City
+        [2070] = { ["full"] = {13314} }, -- Battle of Dazar'alor
+        [2217] = { ["full"] = {58375, 58374, 58373} }, -- Ny'alotha, the Waking City
     },
     [EXPANSION_NAME8] = {                 -- Shadowlands
 
-        [2296] = { 62056, 62055, 62054 }, --Castle Nathria
-        [2450] = { 64599, 64598, 64597 }, --Sanctum of Domination
-        [2481] = { 65762, 65763, 65764 }, --Sepulcher of the First Ones
+        [2296] = { ["full"] = {62056, 62055, 62054} }, --Castle Nathria
+        [2450] = { ["full"] = {64599, 64598, 64597} }, --Sanctum of Domination
+        [2481] = { ["full"] = {65762, 65763, 65764} }, --Sepulcher of the First Ones
     },
     [EXPANSION_NAME9] = {                 -- Dragonflight
-        [2522] = { 71020, 71019, 71018 }, -- Vault of the Incarnates
-        [2569] = { 76086, 76085, 76083 }, -- Aberrus, the Shadowed Crucible
+        [2522] = { ["full"] = {71020, 71019, 71018} }, -- Vault of the Incarnates
+        [2569] = { ["full"] = {76086, 76085, 76083} }, -- Aberrus, the Shadowed Crucible
     },
 };
 

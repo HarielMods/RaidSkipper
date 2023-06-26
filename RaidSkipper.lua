@@ -30,11 +30,23 @@ local PLAYER_CLASS_ID = nil
 local PLAYER_CLASS_COLOR = nil
 local REALM_NAME = nil
 
-local questsInProgress = {}
+local PLAYER_DIFFICULTIES = {
+    PLAYER_DIFFICULTY6,
+    PLAYER_DIFFICULTY2,
+    PLAYER_DIFFICULTY1,
+}
+
+local EXPANSIONS = {
+    EXPANSION_NAME5,
+    EXPANSION_NAME6,
+    EXPANSION_NAME7,
+    EXPANSION_NAME8,
+    EXPANSION_NAME9,
+}
 
 -- Db and Save Skip
 
-local DBVERSION = 110
+local DBVERSION = 111
 
 if raid_skipper_db == nil then
     raid_skipper_db = {}
@@ -501,58 +513,164 @@ local function showRaidSkipStatus()
     end
 end
 
-local function getQuestStatus(questId, difficulty)
+local function getQuestStatus(questId, difficulty, preText)
     local completed = isQuestComplete(questId)
     local inProgress = isQuestInQuestLog(questId)
     if completed then
-        return difficulty .. " (" .. COMPLETE .. ")"
+        return RaidSkipper.getColorText(COMPLETE, preText .. " " .. difficulty .. " (" .. COMPLETE .. ")")
+        -- return {
+        --     text = RaidSkipper.getColorText(COMPLETE, difficulty .. " (" .. COMPLETE .. ")"),
+        --     status = COMPLETE,
+        -- }
     elseif inProgress then
         local status = IN_PROGRESS .. " " .. getQuestProgress(questId)
-        return difficulty .. " (" .. status .. ")"
-    end
-end
-
-local function getRaidStatuses(numOrTable, raidId, index)
-    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
-    local raidObj = {}
-    if type(numOrTable) == "table" then
-        for i, obj in ipairs(numOrTable) do
-            local result = getRaidStatuses(obj, raidId, i)
-            if result ~= nil then
-                table.insert(raidObj, result)
-            end
-        end
-        return raidObj
-    else
-    -- should be questId
-        local status = getQuestStatus(numOrTable, difficulties[index])
-        if status ~= nil then
-            return GetRealZoneText(raidId) .. " " .. status
-        end
+        return RaidSkipper.getColorText(COMPLETE, preText .. " " .. difficulty .. " (" .. status .. ")")
+        -- return {
+        --     text = RaidSkipper.getColorText(COMPLETE, difficulty .. " (" .. COMPLETE .. ")"),
+        --     text = difficulty .. " (" .. status .. ")",
+        --     status = IN_PROGRESS,
+        -- }
     end
     return nil
 end
 
-local function savePlayerSkips()
-    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
+local function getAchievementStatus(achievementId)
+    local accountWideStatus, characterStatus = isAchievementComplete(achievementId)
+    if accountWideStatus then
+        return "(" .. COMPLETE .. ")"
+    else
+        return "(" .. INCOMPLETE .. ")"
+    end
 
-    local playerObj = {
-        classFilename = PLAYER_CLASS_FILENAME,
-        data = {},
-    }
-    for expansionName, expansion in pairs(RaidSkipper.data2) do
-        playerObj["data"][expansionName] = {}
-        for raidId, raid in pairs(expansion) do
-            if raidId ~= 2070 then -- skipping Battle of Dazr'Alor for now
-                playerObj["data"][expansionName][raidId] = {}
-                local raidObj = getRaidStatuses(raid, raidId, 0)
-                if raidObj ~= nil then
-                    table.insert(playerObj["data"][expansionName][raidId], raidObj)
-                end
+end
+
+-- getSkipStatuses
+--   questIdTable: Table of quest IDs: { 1, 2, 3 }. Will always contain 3 entries
+--   raidId: ID of raid
+--   raidWing: full, Lower, Upper
+local function getSkipStatuses(questIdTable, raidId, raidWing)
+    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
+    local raidObj = {}
+    local hasData = false
+
+    for questIndex, questId in ipairs(questIdTable) do
+        local text, status = getQuestStatus(questId, difficulties[questIndex])
+        if status ~= nil then
+            hasData = true
+            if raidWing ~= nil then
+                table.insert(raidObj, RaidSkipper.getColorText(status, raidWing .. " " .. GetRealZoneText(raidId) .. " " .. text))
+            else
+                table.insert(raidObj, RaidSkipper.getColorText(status, GetRealZoneText(raidId) .. " " .. text))
             end
         end
     end
+    
+    if hasData then
+        return raidObj
+    else
+        return nil
+    end
 
+    -- if type(numOrTable) == "table" then
+    --     local foundResult = false -- handle mythic trickle down
+    --     for i, obj in ipairs(numOrTable) do
+    --         local result = getSkipStatuses(obj, raidId, i, raidWing)
+    --         if foundResult == false and result ~= nil then
+    --             hasData = true
+    --             foundResult = true
+    --             table.insert(raidObj, result)
+    --         end
+    --     end
+
+    --     return hasData and raidObj or nil
+    -- else
+    -- -- should be questId
+    --     local text, status = getQuestStatus(numOrTable, difficulties[index])
+    --     if status ~= nil then
+    --         if raidWing ~= nil then
+    --             return RaidSkipper.getColorText(status, raidWing .. " " .. GetRealZoneText(raidId) .. " " .. text)
+    --         else
+    --             return RaidSkipper.getColorText(status, GetRealZoneText(raidId) .. " " .. text)
+    --         end
+    --     end
+    -- end
+    -- return nil
+end
+
+local function savePlayerSkips()
+    local difficulties = { PLAYER_DIFFICULTY6, PLAYER_DIFFICULTY2, PLAYER_DIFFICULTY1 }
+    local playerObj = {
+        classFilename = PLAYER_CLASS_FILENAME,
+        dbVersion = DBVERSION,
+        data = {},
+    }
+
+    local hasExpansionData = false
+
+    for expansionName, expansion in pairs(RaidSkipper.data2) do
+        local expObj = {}
+        for raidId, raid in pairs(expansion) do
+            local hasRaidData = false
+            local raidObj = {} -- simple array of text for a single raid
+
+            if raid["full"] ~= nil then
+                -- handle raidId[full]
+                local raidFullLevel = raid["full"]
+                if raidId == BATTLE_OF_DAZAR_ALOR_INSTANCE_ID then
+                    hasRaidData = true
+                    local status, _ = getAchievementStatus(raidFullLevel[1])
+                    raidObj = {GetRealZoneText(raidId) .. " " .. status }
+                else
+
+                    for questIndex, questId in ipairs(raidFullLevel) do
+                        
+                    end
+
+                    for questIndex, questId in ipairs(raidFullLevel) do
+                        local preText = GetRealZoneText(raidId)
+                        local text = getQuestStatus(questId, difficulties[questIndex], preText)
+                        if text ~= nil then
+                            hasRaidData = true
+                            table.insert(raidObj, text)
+                        end
+                    end
+
+                    local statuses = getSkipStatuses(raidFullLevel, raidId)
+                    if statuses ~= nil then
+                        hasRaidData = true
+                        raidObj = statuses
+                    end
+                end
+            else
+                -- local raidLowerLevel = raid["Lower"]
+                -- local lowerStatuses = getSkipStatuses(raidLowerLevel, raidId, "Lower")
+                -- if lowerStatuses ~= nil then
+                --     hasRaidData = true
+                --     raidObj = lowerStatuses
+                -- end
+
+                -- local raidUpperLevel = raid["Upper"]
+                -- local upperStatuses = getSkipStatuses(raidUpperLevel, raidId, "Upper")
+                -- if upperStatuses ~= nil then
+                --     hasRaidData = true
+                --     raidObj = upperStatuses
+                -- end
+            end
+
+            if hasRaidData then
+                hasExpansionData = true
+                expObj[raidId] = raidObj
+            end
+        end
+
+        if hasExpansionData then
+            playerObj["data"][expansionName] = expObj
+        else
+            playerObj["data"][expansionName] = nil
+        end
+    end
+
+    -- create player object
     if raid_skipper_db[REALM_NAME] == nil then
         raid_skipper_db[REALM_NAME] = {}
         raid_skipper_db[REALM_NAME][PLAYER_NAME] = {}
@@ -566,14 +684,16 @@ end
 
 local function printAccountSkips()
 
-    for realmIndex, realm in ipairs(raid_skipper_db) do
-        RaidSkipper:print(realm)
-        for charIndex, char in ipairs(realm) do
-            RaidSkipper:print(char)
+    for realm, realmData in pairs(raid_skipper_db) do
+        -- RaidSkipper:print(realm)
+        for charName, char in pairs(realmData) do
             local classFilename = char["classFilename"]
-            local classColor = GetClassColor(classFilename)
-
-            -- do this for the correct order
+            local _, _, _, classColor = GetClassColor(classFilename)
+            local charData = char["data"]
+            
+            RaidSkipper:print("\124c" .. classColor .. charName .. "-" .. realm .. "\124r")
+            
+            -- do this to order the output
             local exps = {
                 EXPANSION_NAME5,
                 EXPANSION_NAME6,
@@ -582,30 +702,156 @@ local function printAccountSkips()
                 EXPANSION_NAME9,
             }
 
-            for i, exp in ipairs(exps) do
-                local output = ""
-                -- RaidSkipper:print(exp)
-                
-                -- loop raids
-
-                    -- loops quests
-            end
-
-            for raidId, data in pairs(char.data) do
-                RaidSkipper:print(GetRealZoneText(tonumber(raidId)))
-
+            for expansionIndex, expName in ipairs(exps) do
+                RaidSkipper:print("    " .. expName)
+                local raids = charData[expName]
+                for raidId, raids in pairs(raids) do
+                    for i, skip in ipairs(raids) do
+                        if (skip.status == COMPLETE) then
+                            RaidSkipper:print("        " .. RaidSkipper.getColorText(COMPLETE, skip.text))
+                        elseif (skip.status == IN_PROGRESS) then
+                            RaidSkipper:print("        " .. RaidSkipper.getColorText(IN_PROGRESS, skip.text))
+                        end
+                        
+                    end
+                end
             end
         end
     end
 
-    for char, values in pairs(raid_skipper_db) do
-        local classColor = values.color;
-        RaidSkipper:print("\124c" .. classColor .. char)
-        for raid, info in pairs(values.raids) do
-            local statusText = RaidSkipper.getColorText((info.status == "Complete" and COMPLETE or IN_PROGRESS),
-                info.status)
-            RaidSkipper:print("     " .. info.name .. " - " .. info.difficulty .. " - (" .. statusText .. ")")
+    -- for char, values in pairs(raid_skipper_db) do
+    --     local classColor = values.color;
+    --     RaidSkipper:print("\124c" .. classColor .. char .. "124r")
+    --     for raid, info in pairs(values.raids) do
+    --         local statusText = RaidSkipper.getColorText((info.status == "Complete" and COMPLETE or IN_PROGRESS),
+    --             info.status)
+    --         RaidSkipper:print("     " .. info.name .. " - " .. info.difficulty .. " - (" .. statusText .. ")")
+    --     end
+    -- end
+end
+
+local function getQuestCompleteOrInProgress(questId, raidId, difficulty, preText, postText)
+    local questText = (preText ~= nil and preText .. " " or "") .. GetRealZoneText(raidId) .. " " .. difficulty .. " "
+    if isQuestComplete(questId) then
+        return RaidSkipper.getColorText(COMPLETE, questText .. "(" .. COMPLETE .. ")" .. (postText ~= nil and postText or ""))
+    elseif isQuestInQuestLog(questId) then
+        return RaidSkipper.getColorText(IN_PROGRESS, questText .. "(" .. IN_PROGRESS .. " " .. getQuestProgress(questId) .. ")" .. (postText ~= nil and postText or ""))
+    end
+    return nil
+end
+
+local function reallyPrintSkips(playerName)
+
+    for realmKey, realmData in pairs(raid_skipper_db) do
+        for characterKey, characterData in pairs(realmData) do
+            if playerName == nil or playerName == PLAYER_NAME then
+                local _, _, _, classColor = GetClassColor(characterData["classFilename"])
+                RaidSkipper:print("\124c" .. classColor .. characterKey .. "-" .. realmKey .. "\124r")
+
+                for expansionIndex, expansionName in ipairs(EXPANSIONS) do
+                    RaidSkipper:print("  " .. expansionName)
+                    local expansionData = raid_skipper_db[realmKey][characterKey]["data"][expansionName]
+                    for raidKey, raidData in pairs(expansionData) do
+                        -- RaidSkipper:print("    " .. GetRealZoneText(raidKey))
+
+                        for skipIndex, skipText in ipairs(raidData) do
+                            RaidSkipper:print("      " .. skipText)
+                        end
+                    end
+                end
+            end
         end
+    end
+end
+
+local function reallySaveSkips()
+    raid_skipper_db[REALM_NAME][PLAYER_NAME]["data"] = {}
+    for expansionIndex, expansionName in ipairs(EXPANSIONS) do
+        raid_skipper_db[REALM_NAME][PLAYER_NAME]["data"][expansionName] = {}
+        for raidId, raidData in pairs(RaidSkipper.data2[expansionName]) do -- [raidId] = {[full|Lower|Upper] = {id, id, id}},
+            raid_skipper_db[REALM_NAME][PLAYER_NAME]["data"][expansionName][raidId] = {}
+            for partKey, partData in pairs(raidData) do -- [full|Lower|Upper] = {id, id, id},                
+                for questIndex, questId in pairs(partData) do -- 
+                    local preText = (partKey ~= "full" and partKey or nil)
+                    local postText = ""
+                    local result = getQuestCompleteOrInProgress(questId, raidId, PLAYER_DIFFICULTIES[questIndex], preText, postText)
+                    if result ~= nil then
+                        table.insert(
+                            raid_skipper_db[REALM_NAME][PLAYER_NAME]["data"][expansionName][raidId],
+                            getQuestCompleteOrInProgress(questId, raidId, PLAYER_DIFFICULTIES[questIndex], preText, postText)
+                        )
+                    end
+                end
+            end
+        end
+    end
+
+    -- raid_skipper_db[REALM_NAME][PLAYER_NAME] = {
+    --     [EXPANSION_NAME5] = { -- Warlords of Draenor
+    --         [1205] = { -- Blackrock Foundary
+    --             [1] = getQuestCompleteOrInProgress(37031, 1205, PLAYER_DIFFICULTY6),
+    --             [2] = getQuestCompleteOrInProgress(37030, 1205, PLAYER_DIFFICULTY2),
+    --             [3] = getQuestCompleteOrInProgress(37029, 1205, PLAYER_DIFFICULTY1),
+    --         },
+    --         [1448] = { -- Hellfire Citadel
+    --             [1] = getQuestCompleteOrInProgress(39501, 1205, PLAYER_DIFFICULTY6, "Lower"),
+    --             [2] = getQuestCompleteOrInProgress(39500, 1205, PLAYER_DIFFICULTY2, "Lower"),
+    --             [3] = getQuestCompleteOrInProgress(39499, 1205, PLAYER_DIFFICULTY1, "Lower"),
+    --             [4] = getQuestCompleteOrInProgress(39505, 1205, PLAYER_DIFFICULTY6, "Upper"),
+    --             [5] = getQuestCompleteOrInProgress(39504, 1205, PLAYER_DIFFICULTY2, "Upper"),
+    --             [6] = getQuestCompleteOrInProgress(39502, 1205, PLAYER_DIFFICULTY1, "Upper"),
+    --         },
+    --     },
+    --     [EXPANSION_NAME6] = { -- Legion
+    --         [1520] = { -- The Emerald Nightmare
+    --             [1] = getQuestCompleteOrInProgress(44285, 1520, PLAYER_DIFFICULTY6),
+    --             [2] = getQuestCompleteOrInProgress(44284, 1520, PLAYER_DIFFICULTY2),
+    --             [3] = getQuestCompleteOrInProgress(44283, 1520, PLAYER_DIFFICULTY1),
+    --         },
+    --         [1530] = { -- The Nighthold
+    --             [1] = getQuestCompleteOrInProgress(45383, 1530, PLAYER_DIFFICULTY6),
+    --             [2] = getQuestCompleteOrInProgress(45382, 1530, PLAYER_DIFFICULTY2),
+    --             [3] = getQuestCompleteOrInProgress(45381, 1530, PLAYER_DIFFICULTY1),
+    --         },
+    --         [1676] = { -- Tomb of Sargeras
+    --             [1] = getQuestCompleteOrInProgress(47727, 1676, PLAYER_DIFFICULTY6),
+    --             [2] = getQuestCompleteOrInProgress(47726, 1676, PLAYER_DIFFICULTY2),
+    --             [3] = getQuestCompleteOrInProgress(47725, 1676, PLAYER_DIFFICULTY1),
+    --         },
+    --         [1712] = { -- Antorus, The Burning Throne
+    --             [1] = getQuestCompleteOrInProgress(49076, 1712, PLAYER_DIFFICULTY6, "Lower"),
+    --             [2] = getQuestCompleteOrInProgress(49075, 1712, PLAYER_DIFFICULTY2, "Lower"),
+    --             [3] = getQuestCompleteOrInProgress(49032, 1712, PLAYER_DIFFICULTY1, "Lower"),
+    --             [4] = getQuestCompleteOrInProgress(49135, 1712, PLAYER_DIFFICULTY6, "Upper"),
+    --             [5] = getQuestCompleteOrInProgress(49134, 1712, PLAYER_DIFFICULTY2, "Upper"),
+    --             [6] = getQuestCompleteOrInProgress(49133, 1712, PLAYER_DIFFICULTY1, "Upper"),
+    --         },
+    --     },
+    --     [EXPANSION_NAME7] = { -- Battle for Azeroth
+    --         [2070] = {},
+    --         [2217] = {},
+    --     },
+    --     [EXPANSION_NAME8] = { -- Shadowlands
+    --         [2296] = {},
+    --         [2450] = {},
+    --         [2481] = {},
+    --     },
+    --     [EXPANSION_NAME9] = { -- Dragonflight
+    --         [2522] = {},
+    --         [2569] = {},
+    --     },
+    -- }
+end
+
+local function migrateDb()
+    
+    -- second db
+    if raid_skipper_db[PLAYER_NAME .. "-" .. REALM_NAME] ~= nil then
+        raid_skipper_db[PLAYER_NAME .. "-" .. REALM_NAME] = nil
+    end
+    -- original db
+    if raid_skipper_db[PLAYER_NAME] ~= nil then
+        raid_skipper_db[PLAYER_NAME] = nil
     end
 end
 
@@ -615,13 +861,20 @@ local function init()
     PLAYER_CLASS_NAME, PLAYER_CLASS_FILENAME, PLAYER_CLASS_ID = UnitClass(PLAYER_NAME)
     PLAYER_CLASS_COLOR = GetClassColor(PLAYER_CLASS_FILENAME)
 
-    -- delete old data model
-    if raid_skipper_db[PLAYER_NAME .. "-" .. REALM_NAME] ~= nil then
-        raid_skipper_db[PLAYER_NAME .. "-" .. REALM_NAME] = nil
+    migrateDb()
+
+    -- create 
+    if raid_skipper_db[REALM_NAME] == nil then
+        raid_skipper_db[REALM_NAME] = {}
     end
-    if raid_skipper_db[PLAYER_NAME] ~= nil then
-        raid_skipper_db[PLAYER_NAME] = nil
-    end
+
+    -- if raid_skipper_db[REALM_NAME][PLAYER_NAME] == nil then
+        raid_skipper_db[REALM_NAME][PLAYER_NAME] = {
+            ["dbVersion"] = DBVERSION,
+            ["classFilename"] = PLAYER_CLASS_FILENAME,
+            ["data"] = {}
+        }
+    -- end
 end
 
 -- ----------------------------------------------------------------------------------------------------
@@ -696,13 +949,15 @@ local function SlashHandler(msg, editBox)
     if command then
         -- Show specific raids
         if command == "" then
-            showRaidSkipStatus()
+            reallyPrintSkips()
+            -- showRaidSkipStatus()
         elseif command == "save" or command == "update" then
             savePlayerSkips()
         elseif command == "help" then
             printHelp()
         elseif command == "list" then
-            showMySkips()
+            printAccountSkips()
+            -- showMySkips()
         elseif command == "all" then
             showExpansions()
         elseif command == "df" or command == "dragonflight" then
@@ -727,17 +982,20 @@ end
 
 function RaidSkipper.Frame:ADDON_LOADED(event, addOnName)
     -- print(event, addOnName)
+    init()
+    reallySaveSkips()
 end
 
 function RaidSkipper.Frame:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
     -- print(event, isLogin, isReload)
     -- TODO: Initialize saved vars
-    init()
 end
 
 function RaidSkipper.Frame:PLAYER_LEAVING_WORLD(event)
     -- print(event, isLogin, isReload)
     -- TODO: Initialize saved vars
+    -- savePlayerSkips()
+    reallySaveSkips()
 end
 
 function RaidSkipper.Frame:QUEST_WATCH_UPDATE(event)
