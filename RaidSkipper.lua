@@ -117,7 +117,7 @@ local function ShowQuestInfo(id, difficulty, raidName)
         saveSkip(raidName, difficulty, COMPLETE)
         return RaidSkipper.TextColor(COMPLETE, difficulty)
     elseif (IsQuestInQuestLog(id)) then
-        saveSkip(raidName, difficulty, "In Progress " .. ShowQuestProgress(id))
+        saveSkip(raidName, difficulty, IN_PROGRESS .. " " .. ShowQuestProgress(id))
         -- Player has this quest in their quest log
         return RaidSkipper.TextColor(IN_PROGRESS, difficulty .. " " .. ShowQuestProgress(id))
     else
