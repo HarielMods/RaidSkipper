@@ -9,4 +9,5 @@
 ## X-Wago-ID: XrNkD46a
 
 Data.lua
+RaidSkipper_Functions.lua
 RaidSkipper.lua

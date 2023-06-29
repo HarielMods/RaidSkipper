@@ -18,6 +18,11 @@
         "PLAYER",
         "class",
         "RAID",
-        "INSTANCE_ID"
+        "INSTANCE_ID",
+        "ReloadUI",
+        "SLASH_FRAMESTACK1",
+        "FrameStackTooltip",
+        "FrameStackTooltip_Toggle",
+        "NUM_CHAT_WINDOWS"
     ]
 }
