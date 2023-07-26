@@ -20,18 +20,13 @@ end
 
 local function saveSkip(raid, skip, status)
     local playerName = UnitName("player");
-    local class, _, _ = UnitClass(playerName);
+    local _, classfilename, _ = UnitClass(playerName);
     local realmName = GetRealmName();
     local playerRealm = playerName .. "-" .. realmName;
     local color = nil
 
-    if class ~= nil then
-        if class == "Demon Hunter" then
-            class = "DEMONHUNTER"
-        elseif class == "Death Knight" then
-            class = "DEATHKNIGHT"
-        end
-        color = RAID_CLASS_COLORS[string.upper(class)]
+    if classfilename ~= nil then
+        color = RAID_CLASS_COLORS[classfilename]
     end
     local cc = color or {colorStr = 'ffff0000'}
     
@@ -44,7 +39,7 @@ local function saveSkip(raid, skip, status)
     if raid_skipper_db[playerRealm] == nil or raid_skipper_db[playerRealm]["version"] == nil then
         raid_skipper_db[playerRealm] = {
             ["version"] = 110,
-            ["class"] = class,
+            ["class"] = classfilename,
             ["color"] = cc.colorStr,
             ["raids"] = { }
         }
@@ -63,7 +58,7 @@ local function showMySkips()
         print("\124c" .. color .. char)
         for raid, info in pairs(values.raids) do
             local status_color = "ffffff00";
-            if info.status == "Complete" then
+            if info.status == COMPLETE then
                 status_color = "ff00ff00"
             end
             print("     \124c" .. status_color .. "- " .. info.name .. " - " .. info.difficulty .. " (" .. info.status .. ")")
@@ -119,10 +114,10 @@ end
 local function ShowQuestInfo(id, difficulty, raidName)
     if (IsQuestComplete(id)) then
         -- Player has completed this quest
-        saveSkip(raidName, difficulty, "Complete")
+        saveSkip(raidName, difficulty, COMPLETE)
         return RaidSkipper.TextColor(COMPLETE, difficulty)
     elseif (IsQuestInQuestLog(id)) then
-        saveSkip(raidName, difficulty, "In Progress " .. ShowQuestProgress(id))
+        saveSkip(raidName, difficulty, IN_PROGRESS .. " " .. ShowQuestProgress(id))
         -- Player has this quest in their quest log
         return RaidSkipper.TextColor(IN_PROGRESS, difficulty .. " " .. ShowQuestProgress(id))
     else
