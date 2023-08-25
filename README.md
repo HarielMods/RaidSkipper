@@ -53,10 +53,16 @@ Blue: Quest is in progress
   * The Emerald Nightmare
 
 #### Warlords of Draenor
-  * Hellfire Citdael Upper
-  * Hellfire Citdael Lower
+  * Hellfire Citadel Upper
+  * Hellfire Citadel Lower
   * Blackrock Foundary
 
 ![Example Screenshot](screenshot1.png?raw=true "Example Screenshot")
 
 _Korthia functions removed in favor of the [Korthia Checklist WeakAura](https://wago.io/cyRj6ikQz)_
+
+## TO DO
+
+* Remove Ace library. This addon is so small and Ace is really not needed. 
+* Improve multi-character data.
+* Add a GUI to show quest skip progress for all characters.
