@@ -1,5 +1,10 @@
 # Raid Skipper
 
+### 1.0.20
+* Fix typo in readme
+* Add to dos in readme
+* Update game version to 10.1.5
+
 ### 1.0.19
 * Added new command **list** to show current status of all chars
 
