@@ -1,0 +1,16 @@
+## Title: BS Raid Skipper
+## Interface: 100107
+## Notes: Show which raid content player can skip
+## Author: Hariel
+## SavedVariables: bs_raid_skipper_db, BSRaidSkipperData
+## Version: 1
+## IconTexture: Interface\AddOns\BugSack\Media\icon
+
+embeds.xml
+
+Init.lua
+Locales.lua
+UI.lua
+Data.lua
+Functions.lua
+Core.lua
