@@ -21,6 +21,7 @@ Blue: Quest is in progress
 
 **Show only one expansion:**
 
+* /rs tww
 * /rs df
 * /rs sl
 * /rs bfa
@@ -34,10 +35,12 @@ Blue: Quest is in progress
 ## Raids Currently Supported
 
 #### Dragonflight
+  * Amirdrassil, the Dream's Hope
   * Aberrus, the Shadowed Crucible
   * Vault of the Incarnates
 
 #### Shadowland
+  * Sepulcher of the First Ones
   * Sanctum of Domination
   * Castle Nathria
 
@@ -66,3 +69,4 @@ _Korthia functions removed in favor of the [Korthia Checklist WeakAura](https://
 * Remove Ace library. This addon is so small and Ace is really not needed. 
 * Improve multi-character data.
 * Add a GUI to show quest skip progress for all characters.
+* Update logo and marketing
