@@ -20,7 +20,7 @@ end
 
 local function saveSkip(raid, skip, status)
     local playerName = UnitName("player");
-    local _, classfilename, _ = UnitClass(playerName);
+    local class, classfilename, _ = UnitClass(playerName);
     local realmName = GetRealmName();
     local playerRealm = playerName .. "-" .. realmName;
     local color = nil
@@ -184,11 +184,13 @@ end
 
 local function PrintHelp()
     RaidSkipper:Print("slash commands:")
+    RaidSkipper:Print("  use /rs or /raidskipper")
     RaidSkipper:Print("  /rs wod --> Warlords of Draenor")
     RaidSkipper:Print("  /rs legion --> Legion")
     RaidSkipper:Print("  /rs bfa --> Battle for Azeroth")
     RaidSkipper:Print("  /rs sl --> Shadowlands")
     RaidSkipper:Print("  /rs df --> Dragonflight")
+    RaidSkipper:Print("  /rs tww --> The War Within")
     RaidSkipper:Print("  /rs list --> List my chars status")
 end
 
@@ -246,6 +248,8 @@ function SlashHandler(args)
             ShowExpansion(RaidSkipper.raid_skip_quests[4])
         elseif arg1 == "df" then
             ShowExpansion(RaidSkipper.raid_skip_quests[5])
+        elseif arg1 == "tww" then
+            ShowExpansion(RaidSkipper.raid_skip_quests[6])
         elseif arg1 == "list" then
             showMySkips()
         else
