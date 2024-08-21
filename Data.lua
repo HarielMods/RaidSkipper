@@ -55,9 +55,17 @@ RaidSkipper.raid_skip_quests = {
         raids = {
             --Vault of the Incarnates
             { instanceId = 2522, mythicId = 71020, heroicId = 71019, normalId = 71018 },
-            --"Aberrus, the Shadowed Crucible"
-            { instanceId = 2569, mythicId = 76086, heroicId = 76085, normalId = 76083 }
+            --Aberrus, the Shadowed Crucible
+            { instanceId = 2569, mythicId = 76086, heroicId = 76085, normalId = 76083 },
+            --Amirdrassil, the Dream's Hope
+            { instanceId = 2549, mythicId = 78602, heroicId = 78601, normalId = 78600 }
+        }
+    },
+    {
+        name = EXPANSION_NAME10,
+        raids = {
+            --Nerub-ar Palace
+            -- { instanceId = 0, mythicId = 0, heroicId = 0, normalId = 0 }
         }
     }
 }
-
