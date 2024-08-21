@@ -1,7 +1,7 @@
 local _, RaidSkipper = ...
 
 -- Raid IDs obtained from:
--- https://wowpedia.fandom.com/wiki/InstanceID#Raids
+-- https://warcraft.wiki.gg/wiki/InstanceID#Raids
 
 RaidSkipper.raid_skip_quests = {
     {
