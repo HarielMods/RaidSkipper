@@ -5,6 +5,13 @@ local _, RaidSkipper = ...
 
 RaidSkipper.raid_skip_quests = {
     {
+        name = EXPANSION_NAME4,
+        raids = {
+            --Siege of Orgrimmar
+            { instanceId = 1136, achievementId = 8482, mythicId = 0 }
+        }
+    },
+    {
         name = EXPANSION_NAME5,
         raids = {
             --Blackrock Foundary

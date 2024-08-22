@@ -9,5 +9,5 @@
 ## X-Wago-ID: XrNkD46a
 
 embeds.xml
-Data.lua
 RaidSkipper.lua
+Data.lua
