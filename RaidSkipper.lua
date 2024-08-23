@@ -6,11 +6,8 @@ local _, RaidSkipper = ...
 local GetRealZoneText = GetRealZoneText
 
 addon_name = "RaidSkipper"
-
-RaidSkipper.AceAddon = LibStub("AceAddon-3.0"):NewAddon("RaidSkipper", "AceConsole-3.0", "AceEvent-3.0")
-
--- Workaround to keep the nice RaidSkipper:Print function.
-RaidSkipper.Print = function(self, text) RaidSkipper.AceAddon:Print(text) end
+RaidSkipper.debug = false
+RaidSkipper.queryQuests = {}
 
 -- Db and Save Skip
 
@@ -67,6 +64,15 @@ local function showMySkips()
 end
 
 -- UTILITY FUNCTIONS
+RaidSkipper.Print = function(self, text)
+    print("|cFF00FF00" .. addon_name .. ":|r " .. text)
+end
+
+RaidSkipper.Debug = function(self, text)
+    if RaidSkipper.debug then
+        print("|cFFFF0000" .. addon_name .. ":|r " .. text)
+    end
+end
 
 RaidSkipper.TextColor = function(color, msg)
     local colors = {
@@ -79,6 +85,10 @@ RaidSkipper.TextColor = function(color, msg)
         ["blue"] = "ff0000ff",
     }
     return "\124c" .. colors[color] .. msg .. "\124r"
+end
+
+RaidSkipper.Contains = function(self, table, element)
+    return table[tostring(element)] ~= nil
 end
 
 local function GetClassColor(classFilename)
@@ -96,6 +106,9 @@ end
 
 local function IsQuestComplete(id)
     if (id ~= nil) then
+        if type(id) ~= "number" then
+            id = tonumber(id)
+        end
         return C_QuestLog.IsQuestFlaggedCompleted(id)
     else
         return nil
@@ -104,6 +117,9 @@ end
 
 local function IsAchievementComplete(id)
     if (id ~= nil) then
+        if type(id) ~= "number" then
+            id = tonumber(id)
+        end
         local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(id)
         return completed
     else
@@ -204,6 +220,7 @@ local function PrintHelp()
     RaidSkipper:Print("  /rs df --> Dragonflight")
     RaidSkipper:Print("  /rs tww --> The War Within")
     RaidSkipper:Print("  /rs list --> List my chars status")
+    RaidSkipper:Print("  /rs show --> Open RaidSkipper window")
 end
 
 local function ShowRaidInstanceById(id)
@@ -271,7 +288,7 @@ local function GetAchievementStatusFromGame(achievementId)
 end
 
 local function SaveCharacterData()
-    RaidSkipper:Print("SaveCharacterData")
+    RaidSkipper:Debug("SaveCharacterData")
 
     local playerName = UnitName("player");
     local class, classFilename, _ = UnitClass(playerName);
@@ -378,7 +395,7 @@ end
 
 -- Create the dropdown menu for character selection
 RaidSkipper.CharacterSelect_Menu = function(frame, level, menuList)
-    RaidSkipper:Print("CharacterSelect_Menu")
+    RaidSkipper:Debug("CharacterSelect_Menu")
     local info = UIDropDownMenu_CreateInfo()
     info.func = RaidSkipper.CharacterSelect_SetValue
 
@@ -393,7 +410,7 @@ end
 
 -- Handle character dropdown menu selection
 RaidSkipper.CharacterSelect_SetValue = function(self, arg1, arg2, checked)
-    RaidSkipper:Print("CharacterSelect_SetValue")
+    RaidSkipper:Debug("CharacterSelect_SetValue")
     UIDropDownMenu_SetText(RaidSkipper.frame.CharacterSelect, arg1)
     RaidSkipper.UIShowCharacter(arg1)
     CloseDropDownMenus()
@@ -401,7 +418,7 @@ end
 
 -- Create the dropdown menu for expansion selection
 RaidSkipper.ExpansionSelect_Menu = function(frame, level, menuList)
-    RaidSkipper:Print("ExpansionSelect_Menu")
+    RaidSkipper:Debug("ExpansionSelect_Menu")
     local info = UIDropDownMenu_CreateInfo()
     info.func = RaidSkipper.ExpansionSelect_SetValue
     
@@ -416,7 +433,7 @@ end
 
 -- Handle expansion dropdown menu selection
 RaidSkipper.ExpansionSelect_SetValue = function(self, arg1, arg2, checked)
-    RaidSkipper:Print("ExpansionSelect_SetValue")
+    RaidSkipper:Debug("ExpansionSelect_SetValue")
     UIDropDownMenu_SetText(RaidSkipper.frame.ExpansionSelect, arg1)
     RaidSkipper.UIShowExpansion(arg1)
     CloseDropDownMenus()
@@ -424,7 +441,7 @@ end
 
 -- Create the dropdown menu for raid selection
 RaidSkipper.RaidSelect_Menu = function(frame, level, menuList)
-    RaidSkipper:Print("RaidSelect_Menu")
+    RaidSkipper:Debug("RaidSelect_Menu")
     local info = UIDropDownMenu_CreateInfo()
     info.func = RaidSkipper.RaidSelect_SetValue
 
@@ -441,7 +458,7 @@ end
 
 -- Handle raid dropdown menu selection
 RaidSkipper.RaidSelect_SetValue = function(self, arg1, arg2, checked)
-    RaidSkipper:Print("RaidSelect_SetValue")
+    RaidSkipper:Debug("RaidSelect_SetValue")
     UIDropDownMenu_SetText(RaidSkipper.frame.RaidSelect, GetRealZoneText(arg1))
     CloseDropDownMenus()
 end
@@ -472,7 +489,7 @@ end
 
 -- Show the character's raid skip status
 RaidSkipper.UIShowCharacter = function(characterKey)
-    RaidSkipper:Print("UIShowCharacter")
+    RaidSkipper:Debug("UIShowCharacter")
 
     local character = raid_skipper_db[characterKey]
     local blob = characterKey .. "\n"
@@ -526,7 +543,7 @@ RaidSkipper.UIShowExpansion = function(expansion)
     
     local output = ""
     for key, raid in ipairs(expansionData.raids) do
-        RaidSkipper:Print("raid: " .. GetRealZoneText(raid.instanceId))
+        RaidSkipper:Debug("raid: " .. GetRealZoneText(raid.instanceId))
 
         output = output .. GetRealZoneText(raid.instanceId) .. "\n" -- Show raid name as title, list characters below
         if raid.instanceId == 2070 or raid.instanceId == 1136 then
@@ -543,8 +560,8 @@ RaidSkipper.UIShowExpansion = function(expansion)
             for playerRealmKey, playerData in pairs(raid_skipper_db) do
                 if playerData.version == 120 and playerData["quests"] and type(playerData["quests"][mythicId]) ~= "boolean" then
                     
-                    -- RaidSkipper:Print("type: " .. type(playerData["quests"][mythicId]))
-                    -- RaidSkipper:Print("playerRealmKey: " .. playerRealmKey)
+                    -- RaidSkipper:Debug("type: " .. type(playerData["quests"][mythicId]))
+                    -- RaidSkipper:Debug("playerRealmKey: " .. playerRealmKey)
                     
                     local mythicStatus = playerData["quests"][mythicId]
                     local heroicStatus = playerData["quests"][heroicId]
@@ -575,8 +592,32 @@ RaidSkipper.UIShowExpansion = function(expansion)
 end
 -- ----------------------------------------------------------------------------------------------------
 
+RaidSkipper.Split = function(self, input, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+    local t = {}
+    for str in string.gmatch(input, "([^" .. sep .. "]+)") do
+        table.insert(t, str)
+    end
+    return t
+end
+
+RaidSkipper.GetArgs = function(args, pos)
+    if type(args) == "string" then
+        args = RaidSkipper:Split(args, " ")
+    end
+
+    if args[pos] ~= nil then
+        return args[pos]
+    end
+end
+
 function SlashHandler(args)
-    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
+    RaidSkipper:Debug("SlashHandler")
+
+    local argsTable = RaidSkipper:Split(args, " ")
+    local arg1 = argsTable[1]
 
     if arg1 then
         arg1 = arg1:lower()
@@ -611,8 +652,37 @@ function SlashHandler(args)
     end
 end
 
+function IsCompleteHandler(args)
+    RaidSkipper:Debug("IsCompleteHandler")
+    local argsTable = RaidSkipper:Split(args, " ")
+
+    RaidSkipper:Print("--------------------")
+    for key, arg in ipairs(argsTable) do   
+        -- Attempt to load quest data     
+        RaidSkipper.queryQuests[arg] = true
+        C_QuestLog.RequestLoadQuestByID(arg)
+        -- Result will be handled by QUEST_DATA_LOAD_RESULT event
+
+        -- Check Achievement
+        local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(arg)
+        if id ~= nil then
+            if completed then
+                RaidSkipper:Print("Achievement " .. arg .. " " .. RaidSkipper.TextColor(COMPLETE, COMPLETE))
+            else
+                RaidSkipper:Print("Achievement " .. arg .. " " .. RaidSkipper.TextColor(INCOMPLETE, INCOMPLETE))
+            end
+        else
+            RaidSkipper:Print("Achievement " .. arg .. " not found")
+        end
+    end
+    RaidSkipper:Print("--------------------")
+end
+
+
+
 function IsAchievementCompleteHandler(args)
-    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
+    RaidSkipper:Debug("IsAchievementCompleteHandler")
+    local arg1 = RaidSkipper.GetArgs(args, 1)
 
     if arg1 then
         ShowAchievementInfo(arg1)
@@ -620,7 +690,8 @@ function IsAchievementCompleteHandler(args)
 end
 
 function IsQuestCompleteHandler(args)
-    local arg1 = RaidSkipper.AceAddon:GetArgs(args, 1)
+    RaidSkipper:Debug("IsQuestCompleteHandler")
+    local arg1 = RaidSkipper.GetArgs(args, 1)
 
     if arg1 then
         if IsQuestComplete(arg1) then
@@ -631,17 +702,57 @@ function IsQuestCompleteHandler(args)
     end
 end
 
-function RaidSkipper.AceAddon:OnInitialize()
-    
-    self:RegisterEvent("ZONE_CHANGED_NEW_AREA", OnChangeZone)
-    self:RegisterEvent("PLAYER_LOGIN", SaveCharacterData)
-    -- self:RegisterEvent("PLAYER_LOGOUT", SaveCharacterData)
-    
-    self:RegisterChatCommand("raidskipper", SlashHandler)
-    self:RegisterChatCommand("rs", SlashHandler)
-    self:RegisterChatCommand("iac", IsAchievementCompleteHandler)
-    self:RegisterChatCommand("iqc", IsQuestCompleteHandler)
+-- Register events ------------------------------------------------------------
+
+local frame, events = CreateFrame("Frame"), {}
+
+function events:ZONE_CHANGED_NEW_AREA()
+    OnChangeZone()
 end
 
-function RaidSkipper.AceAddon:OnEnable()
+function events:PLAYER_LOGIN()
+    SaveCharacterData()
 end
+
+function events:QUEST_DATA_LOAD_RESULT(...)
+    RaidSkipper:Debug("QUEST_DATA_LOAD_RESULT")
+    local questID, success = ...
+    if RaidSkipper:Contains(RaidSkipper.queryQuests, questID) then
+        table.remove(RaidSkipper.queryQuests, questID)
+
+        local completed = C_QuestLog.IsQuestFlaggedCompleted(questID)
+        local name = ""
+        if success then
+            name = C_QuestLog.GetTitleForQuestID(questID)
+            if name == nil then
+                name = "Unknown quest"
+            end
+        end
+
+        RaidSkipper:Print("--------------------")
+        if completed then
+            RaidSkipper:Print("Quest Id: " .. questID .. " " .. RaidSkipper.TextColor(COMPLETE, COMPLETE) .. " " .. name)
+        else
+            RaidSkipper:Print("Quest Id: " .. questID .. " " .. RaidSkipper.TextColor(INCOMPLETE, INCOMPLETE) .. " " .. name)
+        end
+        RaidSkipper:Print("--------------------")
+    end    
+end
+
+frame:SetScript("OnEvent", function(self, event, ...)
+    events[event](self, ...)
+end)
+
+for k, v in pairs(events) do
+    frame:RegisterEvent(k)
+end
+
+-- Slash Commands -------------------------------------------------------------
+SLASH_RAIDSKIPPER1 = "/raidskipper"
+SLASH_RAIDSKIPPER2 = "/rs"
+
+SlashCmdList["RAIDSKIPPER"] = SlashHandler
+
+SLASH_ISCOMPLETE1 = "/ic"
+
+SlashCmdList["ISCOMPLETE"] = IsCompleteHandler
