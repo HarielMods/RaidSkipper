@@ -6,6 +6,7 @@ local _, RaidSkipper = ...
 RaidSkipper.raid_skip_quests = {
     {
         name = EXPANSION_NAME4,
+        expansionId = LE_EXPANSION_MISTS_OF_PANDARIA,
         raids = {
             --Siege of Orgrimmar
             { instanceId = 1136, achievementId = 8482, mythicId = 0 }
@@ -13,6 +14,7 @@ RaidSkipper.raid_skip_quests = {
     },
     {
         name = EXPANSION_NAME5,
+        expansionId = LE_EXPANSION_WARLORDS_OF_DRAENOR,
         raids = {
             --Blackrock Foundary
             { instanceId = 1205,  mythicId = 37031, heroicId = 37030, normalId = 37029 },
@@ -24,6 +26,7 @@ RaidSkipper.raid_skip_quests = {
     },
     {
         name = EXPANSION_NAME6,
+        expansionId = LE_EXPANSION_LEGION,
         raids = {
             --The Emerald Nightmare
             { instanceId = 1520, mythicId = 44285, heroicId = 44284, normalId = 44283 },
@@ -39,6 +42,7 @@ RaidSkipper.raid_skip_quests = {
     },
     {
         name = EXPANSION_NAME7,
+        expansionId = LE_EXPANSION_BATTLE_FOR_AZEROTH,
         raids = {
             --Battle of Dazar'alor
             { instanceId = 2070, achievementId = 13314, mythicId = 316476 },
@@ -48,6 +52,7 @@ RaidSkipper.raid_skip_quests = {
     },
     {
         name = EXPANSION_NAME8,
+        expansionId = LE_EXPANSION_SHADOWLANDS,
         raids = {
             --Castle Nathria
             { instanceId = 2296, mythicId = 62056, heroicId = 62055, normalId = 62054 },
@@ -59,6 +64,7 @@ RaidSkipper.raid_skip_quests = {
     },
     {
         name = EXPANSION_NAME9,
+        expansionId = LE_EXPANSION_DRAGONFLIGHT,
         raids = {
             --Vault of the Incarnates
             { instanceId = 2522, mythicId = 71020, heroicId = 71019, normalId = 71018 },
@@ -70,6 +76,7 @@ RaidSkipper.raid_skip_quests = {
     },
     {
         name = EXPANSION_NAME10,
+        expansionId = LE_EXPANSION_WAR_WITHIN,
         raids = {
             --Nerub-ar Palace
             -- { instanceId = 0, mythicId = 0, heroicId = 0, normalId = 0 }

@@ -9,10 +9,36 @@ addon_name = "RaidSkipper"
 RaidSkipper.debug = false
 RaidSkipper.queryQuests = {}
 
+local ICON_COMPLETE = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
+local ICON_INCOMPLETE = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
+local ICON_IN_PROGRESS = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:0|t"
+local ICON_QUEST = "|TInterface\\Minimap\\Tracking\\TrivialQuests:0|t"
+
 -- Db and Save Skip
 
 if raid_skipper_db == nil then
     raid_skipper_db = { }
+end
+
+local function DBMigrations()
+    for playerName, values in pairs(raid_skipper_db) do
+        local playerName, realmName = string.match(playerName, "(.+)-(.+)")
+
+        if values["version"] == nil then
+
+        elseif values["version"] < 120 then
+            local raids = values["raids"]
+            for k, raid in raids do
+
+            end
+        end
+
+
+        if playerName and realmName then
+            raid_skipper_db[playerName .. "-" .. realmName] = values
+            raid_skipper_db[playerName] = nil
+        end
+    end
 end
 
 local function saveSkip(raid, skip, status)
@@ -64,6 +90,7 @@ local function showMySkips()
 end
 
 -- UTILITY FUNCTIONS
+
 RaidSkipper.Print = function(self, text)
     print("|cFF00FF00" .. addon_name .. ":|r " .. text)
 end
@@ -78,17 +105,39 @@ RaidSkipper.TextColor = function(color, msg)
     local colors = {
         [COMPLETE] = "ff00ff00",
         [INCOMPLETE] = "ffff0000",
-        [IN_PROGRESS] = "ff00ffff",
+        [IN_PROGRESS] = "ffffff00", -- "ff00ffff",
         ["yellow"] = "ffffff00",
         ["red"] = "ffff0000",
         ["green"] = "ff00ff00",
         ["blue"] = "ff0000ff",
+        ["EXPANSION_NAME"] = "ff00ffff"
     }
     return "\124c" .. colors[color] .. msg .. "\124r"
 end
 
 RaidSkipper.Contains = function(self, table, element)
     return table[tostring(element)] ~= nil
+end
+
+RaidSkipper.Split = function(self, input, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+    local t = {}
+    for str in string.gmatch(input, "([^" .. sep .. "]+)") do
+        table.insert(t, str)
+    end
+    return t
+end
+
+RaidSkipper.GetArgs = function(args, pos)
+    if type(args) == "string" then
+        args = RaidSkipper:Split(args, " ")
+    end
+
+    if args[pos] ~= nil then
+        return args[pos]
+    end
 end
 
 local function GetClassColor(classFilename)
@@ -102,7 +151,12 @@ local function GetPlayerRealmName(playerName, realmName)
     return playerName .. "-" .. realmName
 end
 
--- QUEST FUNCTIONS
+local function InRaid() 
+    local instanceType = select(2, GetInstanceInfo())
+    return instanceType == "raid"
+end
+
+-- QUEST AND ACHIEVEMENT FUNCTIONS
 
 local function IsQuestComplete(id)
     if (id ~= nil) then
@@ -113,6 +167,10 @@ local function IsQuestComplete(id)
     else
         return nil
     end
+end
+
+local function IsQuestInQuestLog(id)
+    return (C_QuestLog.GetLogIndexForQuestID(id) ~= nil)
 end
 
 local function IsAchievementComplete(id)
@@ -127,11 +185,7 @@ local function IsAchievementComplete(id)
     end
 end
 
-local function IsQuestInQuestLog(id)
-    return (C_QuestLog.GetLogIndexForQuestID(id) ~= nil)
-end
-
--- DISPLAY FUNCTIONS
+-- CHAT DISPLAY FUNCTIONS
 
 local function ShowQuestProgress(id)
     local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(id, 1, false)
@@ -146,6 +200,21 @@ local function ShowQuestInfo(id, difficulty, raidName)
     elseif (IsQuestInQuestLog(id)) then
         --saveSkip(raidName, difficulty, IN_PROGRESS .. " " .. ShowQuestProgress(id))
         -- Player has this quest in their quest log
+        local numQuestObjectives = C_QuestLog.GetNumQuestObjectives(id)
+        if numQuestObjectives > 0 then
+            local objectives = {}
+            for i = 1, numQuestObjectives do
+                local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(id, i, false)
+                table.insert(objectives, RaidSkipper.TextColor(IN_PROGRESS, " " .. text))
+            end
+            if objectives == nil or #objectives == 0 then
+                return RaidSkipper.TextColor(IN_PROGRESS, difficulty)
+            else
+                return table.concat(objectives)
+            end
+        else
+            return RaidSkipper.TextColor(IN_PROGRESS, difficulty)
+        end
         return RaidSkipper.TextColor(IN_PROGRESS, difficulty .. " " .. ShowQuestProgress(id))
     else
         -- Player has not completed this quest does not have quest in the quest log
@@ -239,17 +308,12 @@ local function ShowRaidInstanceById(id)
     end
 end
 
-local function InRaid() 
-    local instanceType = select(2, GetInstanceInfo())
-    return instanceType == "raid"
-end
-
 local function ShowCurrentRaid() 
     local instanceID = select(8, GetInstanceInfo())
     ShowRaidInstanceById(instanceID)
 end
 
--- Event Hooks ----------------------------------------------------------------------------------------
+-- Event Hooks ----------------------------------------------------------------
 
 local function OnChangeZone()
     local in_raid = InRaid()
@@ -260,21 +324,39 @@ local function OnChangeZone()
 end
 
 local function GetQuestStatusFromGame(questId)
-    local questComplete, inLog, inLogStatus = IsQuestComplete(questId), IsQuestInQuestLog(questId), ""
-    local statusText, inLogStatus
+    local questComplete, inLog = IsQuestComplete(questId), IsQuestInQuestLog(questId)
+    local status, statusText = "", ""
     if questComplete then
-        statusText = COMPLETE
+        status = COMPLETE
     elseif inLog then
-        statusText = IN_PROGRESS
+        status = IN_PROGRESS
+        
         local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, 1, false)
-        inLogStatus = fulfilled .. "/" .. required
+        statusText = fulfilled .. "/" .. required
+
+        -- Get in progress status
+        -- local numQuestObjectives = C_QuestLog.GetNumQuestObjectives(questId)
+        -- if numQuestObjectives > 0 then
+        --     local objectives = {}
+        --     for i = 1, numQuestObjectives do
+        --         local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, i, false)
+        --         table.insert(objectives, RaidSkipper.TextColor(IN_PROGRESS, " " .. text))
+        --     end
+        --     if objectives == nil or #objectives == 0 then
+        --         statusText = RaidSkipper.TextColor(IN_PROGRESS, IN_PROGRESS)
+        --     else
+        --         statusText = table.concat(objectives, "\n")
+        --     end
+        -- else
+        --     statusText = RaidSkipper.TextColor(IN_PROGRESS, difficulty)
+        -- end
     else
-        statusText = INCOMPLETE
+        status = INCOMPLETE
     end
 
     return {
-        ["status"] = statusText,
-        ["inLogStatus"] = inLogStatus
+        ["status"] = status,
+        ["statusText"] = statusText
     }
 end
 
@@ -337,10 +419,7 @@ local function SaveCharacterData()
     end
 end
 
-
-
-
--- UI -------------------------------------------------------------------------------------------------
+-- UI -------------------------------------------------------------------------
 
 local function CreateWindow()
     local frame = CreateFrame("Frame", "RaidSkipperFrame", UIParent, "BasicFrameTemplateWithInset")
@@ -399,8 +478,8 @@ RaidSkipper.CharacterSelect_Menu = function(frame, level, menuList)
     local info = UIDropDownMenu_CreateInfo()
     info.func = RaidSkipper.CharacterSelect_SetValue
 
-    info.text, info.arg1, info.arg2, info.checked = "All", "all", nil, false
-    UIDropDownMenu_AddButton(info)
+    -- info.text, info.arg1, info.arg2, info.checked = "All", "all", nil, false
+    -- UIDropDownMenu_AddButton(info)
 
     for key, character in pairs(raid_skipper_db) do
         info.text, info.arg1, info.arg2, info.checked = key, key, nil, false
@@ -422,8 +501,8 @@ RaidSkipper.ExpansionSelect_Menu = function(frame, level, menuList)
     local info = UIDropDownMenu_CreateInfo()
     info.func = RaidSkipper.ExpansionSelect_SetValue
     
-    info.text, info.arg1, info.arg2, info.checked = "All", "all", nil, false
-    UIDropDownMenu_AddButton(info)
+    -- info.text, info.arg1, info.arg2, info.checked = "All", "all", nil, false
+    -- UIDropDownMenu_AddButton(info)
 
     for index, expansion in ipairs(RaidSkipper.raid_skip_quests) do
         info.text, info.arg1, info.arg2, info.checked = expansion.name, expansion.name, nil, false
@@ -445,8 +524,8 @@ RaidSkipper.RaidSelect_Menu = function(frame, level, menuList)
     local info = UIDropDownMenu_CreateInfo()
     info.func = RaidSkipper.RaidSelect_SetValue
 
-    info.text, info.arg1, info.arg2, info.checked = "All", "all", nil, false
-    UIDropDownMenu_AddButton(info)
+    -- info.text, info.arg1, info.arg2, info.checked = "All", "all", nil, false
+    -- UIDropDownMenu_AddButton(info)
 
     for index, expansion in ipairs(RaidSkipper.raid_skip_quests) do
         for key, raid in ipairs(expansion.raids) do
@@ -463,13 +542,29 @@ RaidSkipper.RaidSelect_SetValue = function(self, arg1, arg2, checked)
     CloseDropDownMenus()
 end
 
+-- Get the status text for a quest from the saved variables
 local function GetQuestStatusTextFromVars(questObject, text)
     if questObject.status == COMPLETE then
-        return RaidSkipper.TextColor(COMPLETE, text)
+        return "    " .. RaidSkipper.TextColor(COMPLETE, text .. " " .. ICON_COMPLETE)
     elseif questObject.status == IN_PROGRESS then
-        return RaidSkipper.TextColor(IN_PROGRESS, text .. " " .. questObject.inLogStatus)
+        return "    " .. RaidSkipper.TextColor(IN_PROGRESS, text .. " " .. ICON_IN_PROGRESS)
+        -- local numQuestObjectives = C_QuestLog.GetNumQuestObjectives(id)
+        -- if numQuestObjectives > 0 then
+        --     local objectives = {}
+        --     for i = 1, numQuestObjectives do
+        --         local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(id, i, false)
+        --         table.insert(objectives, RaidSkipper.TextColor(IN_PROGRESS, " " .. text))
+        --     end
+        --     if objectives == nil or #objectives == 0 then
+        --         return RaidSkipper.TextColor(IN_PROGRESS, difficulty)
+        --     else
+        --         return table.concat(objectives)
+        --     end
+        -- else
+        --     return RaidSkipper.TextColor(IN_PROGRESS, difficulty)
+        -- end
     else
-        return RaidSkipper.TextColor(INCOMPLETE, text)
+        return "    " .. RaidSkipper.TextColor(INCOMPLETE, text .. " " .. ICON_INCOMPLETE)
     end
 end
 
@@ -492,7 +587,11 @@ RaidSkipper.UIShowCharacter = function(characterKey)
     RaidSkipper:Debug("UIShowCharacter")
 
     local character = raid_skipper_db[characterKey]
-    local blob = characterKey .. "\n"
+    local characterNameDisplay = characterKey
+    if character.classFilename then
+        characterNameDisplay = "\124c" .. GetClassColor(character.classFilename) .. characterKey .. "\124r"
+    end
+    local blob = characterNameDisplay  .. "\n"
 
     if character.version < 120 then
         blob = blob .. "Character data is out of date. Please log in with this character to update the data."
@@ -501,7 +600,14 @@ RaidSkipper.UIShowCharacter = function(characterKey)
     end
 
     for name, expansion in ipairs(RaidSkipper.raid_skip_quests) do
-        blob = blob .. "    " .. expansion.name .. "\n"
+        -- local expansionInfo = GetExpansionDisplayInfo(expansion.expansionId)
+        
+        local expansionIcon = ""
+        -- if expansionInfo and expansionInfo.logo then
+        --     expansionIcon = " |T" .. expansionInfo.logo .. ":0:6|t"
+        -- end
+
+        blob = blob .. "    " .. RaidSkipper.TextColor("EXPANSION_NAME", expansion.name) .. expansionIcon .. "\n"
 
         for key, raid in ipairs(expansion.raids) do
             local raidLine = "        " .. GetRealZoneText(raid.instanceId) .. ": "
@@ -590,26 +696,13 @@ RaidSkipper.UIShowExpansion = function(expansion)
     end
     RaidSkipper.frame.textBlob:SetText(output)
 end
--- ----------------------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 
-RaidSkipper.Split = function(self, input, sep)
-    if sep == nil then
-        sep = "%s"
-    end
-    local t = {}
-    for str in string.gmatch(input, "([^" .. sep .. "]+)") do
-        table.insert(t, str)
-    end
-    return t
-end
-
-RaidSkipper.GetArgs = function(args, pos)
-    if type(args) == "string" then
-        args = RaidSkipper:Split(args, " ")
-    end
-
-    if args[pos] ~= nil then
-        return args[pos]
+local function GetExpansionDataFromName(expansionName)
+    for index, value in ipairs(RaidSkipper.raid_skip_quests) do
+        if value.name == expansionName then
+            return value
+        end
     end
 end
 
@@ -624,18 +717,20 @@ function SlashHandler(args)
         
         if arg1 == "all" then
             ShowExpansions()
+        elseif arg1 == "mop" then
+            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME4))
         elseif arg1 == "wod" then
-            ShowExpansion(RaidSkipper.raid_skip_quests[1])
+            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME5))
         elseif arg1 == "legion" then
-            ShowExpansion(RaidSkipper.raid_skip_quests[2])
+            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME6))
         elseif arg1 == "bfa" then
-            ShowExpansion(RaidSkipper.raid_skip_quests[3])
+            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME7))
         elseif arg1 == "sl" then
-            ShowExpansion(RaidSkipper.raid_skip_quests[4])
+            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME8))
         elseif arg1 == "df" then
-            ShowExpansion(RaidSkipper.raid_skip_quests[5])
+            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME9))
         elseif arg1 == "tww" then
-            ShowExpansion(RaidSkipper.raid_skip_quests[6])
+            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME10))
         elseif arg1 == "list" then
             showMySkips()
         elseif arg1 == "show" then
@@ -677,8 +772,6 @@ function IsCompleteHandler(args)
     end
     RaidSkipper:Print("--------------------")
 end
-
-
 
 function IsAchievementCompleteHandler(args)
     RaidSkipper:Debug("IsAchievementCompleteHandler")
