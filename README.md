@@ -1,5 +1,9 @@
 # Raid Skipper
 
+---
+# HUGE NEWS!! Raid skips are now account wide! Reported by [MrGM](https://x.com/MrGMYT/status/1849049750227550234) and [Icy Veins](https://www.icy-veins.com/wow/news/account-wide-raid-skips/). I will see how this affects RaidSkipper's behavior and update soon.
+---
+
 Show which quests or achievements have been completed that allow the player to 
 skip content in raids. If you run legacy raids for mounts and xmog this addon 
 is for you!
