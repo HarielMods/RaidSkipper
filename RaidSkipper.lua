@@ -3,44 +3,131 @@
 ------------------------------------------------------------
 
 local _, RaidSkipper = ...
-local GetRealZoneText = GetRealZoneText
-
 addon_name = "RaidSkipper"
 RaidSkipper.debug = false
-RaidSkipper.queryQuests = {}
+RaidSkipper.DBVersion = 120
+
+
+-- localize Blizzard functions
+local GetRealZoneText = GetRealZoneText
+local GetInstanceInfo = GetInstanceInfo
+local GetRealmName = GetRealmName
+local GetQuestObjectiveInfo = GetQuestObjectiveInfo
+local GetAchievementInfo = GetAchievementInfo
+local C_QuestLog = C_QuestLog
+local RAID_CLASS_COLORS = RAID_CLASS_COLORS
+local UnitName = UnitName
+local UnitClass = UnitClass
+local UnitLevel = UnitLevel
+local UnitRace = UnitRace
+local PLAYER_DIFFICULTY1 = PLAYER_DIFFICULTY1
+local PLAYER_DIFFICULTY2 = PLAYER_DIFFICULTY2
+local PLAYER_DIFFICULTY6 = PLAYER_DIFFICULTY6
 
 local ICON_COMPLETE = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
 local ICON_INCOMPLETE = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
 local ICON_IN_PROGRESS = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:0|t"
 local ICON_QUEST = "|TInterface\\Minimap\\Tracking\\TrivialQuests:0|t"
 
--- Db and Save Skip
+RaidSkipper.CurrentPlayer = {}
 
-if raid_skipper_db == nil then
-    raid_skipper_db = { }
+RaidSkipper.defaultPlayerData = {
+    ["version"] = RaidSkipper.DBVersion,
+    ["playerName"] = "",
+    ["realmName"] = "",
+    ["playerRealm"] = "",
+    ["class"] = "",
+    ["classFilename"] = "",
+    ["color"] = "",
+    ["level"] = "",
+    ["race"] = "",
+    ["raceFilename"] = "",
+    ["quests"] = {}
+}
+
+RaidSkipper.accountWideData = {
+    ["achievements"] = { 
+        8482, -- Siege of Orgrimmar
+        13314 -- Battle of Dazar'alor
+    }
+}
+
+-- DATABASE -------------------------------------------------------------------
+
+-- Database namespace
+local DB = {}
+
+function DB.init()
+    if raid_skipper_db == nil then
+        raid_skipper_db = {
+            ["quests"] = {},
+            ["requestedQuests"] = {},
+            ["characters"] = {}
+        }
+    end
+    
+    if raid_skipper_db["quests"] == nil then
+        raid_skipper_db["quests"] = { }
+    end
+    
+    if raid_skipper_db["requestedQuests"] == nil then
+        raid_skipper_db["requestedQuests"] = { }
+    end
+
+    if raid_skipper_db["characters"] == nil then
+        raid_skipper_db["characters"] = { }
+    end
+    
+    DB.migrations()
 end
 
-local function DBMigrations()
-    for playerName, values in pairs(raid_skipper_db) do
-        local playerName, realmName = string.match(playerName, "(.+)-(.+)")
+function DB.migrations()
+    -- First ever stored variables for current character
+    if raid_skipper_db[playerName] ~= nil and raid_skipper_db[playerRealm] == nil then
+        raid_skipper_db["characters"][playerRealm] = raid_skipper_db[playerName];
+        raid_skipper_db[playerName] = nil;
+    end
 
-        if values["version"] == nil then
+    -- Move top level characters to raid_skipper_db["characters"]
+    for k, v in pairs(raid_skipper_db) do
+        RaidSkipper:Debug("raid_skipper_db["..k.."]")
 
-        elseif values["version"] < 120 then
-            local raids = values["raids"]
-            for k, raid in raids do
-
-            end
-        end
-
-
-        if playerName and realmName then
-            raid_skipper_db[playerName .. "-" .. realmName] = values
-            raid_skipper_db[playerName] = nil
+        if k ~= "quests" and k ~= "requestedQuests" and k ~= "characters" then
+            raid_skipper_db["characters"][k] = v
+            raid_skipper_db[k] = nil            
         end
     end
 end
 
+function DB.getCharacters()
+    if raid_skipper_db["characters"] == nil then
+        raid_skipper_db["characters"] = {}
+        for k, v in pairs(raid_skipper_db) do
+            if k ~= "quests" and k ~= "requestedQuests" and k ~= "characters" then
+                raid_skipper_db["characters"][k] = v
+                raid_skipper_db[k] = nil
+            end
+        end
+    end
+    return raid_skipper_db["characters"]
+end
+
+function DB.getCharacterByPlayerRealm(playerRealm)
+    local characters = DB.getCharacters()
+    if characters[playerRealm] ~= nil then
+        return characters[playerRealm]
+    end
+    return RaidSkipper.defaultPlayerData
+end
+
+function DB.saveCharacterData(key, data)
+    if raid_skipper_db["characters"] == nil then
+        raid_skipper_db["characters"] = {}
+    end
+    raid_skipper_db["characters"][key] = data
+end
+
+-- Deprecated: Save skip status for a raid
 local function saveSkip(raid, skip, status)
     local playerName = UnitName("player");
     local class, classfilename, _ = UnitClass(playerName);
@@ -75,6 +162,7 @@ local function saveSkip(raid, skip, status)
     }   
 end
 
+-- Deprecated: Show completed skips for all characters
 local function showMySkips()
     for char, values in pairs(raid_skipper_db) do
         local color = values.color;
@@ -115,11 +203,14 @@ RaidSkipper.TextColor = function(color, msg)
     return "\124c" .. colors[color] .. msg .. "\124r"
 end
 
-RaidSkipper.Contains = function(self, table, element)
-    return table[tostring(element)] ~= nil
+-- Check if a table contains an element
+RaidSkipper.Contains = function(table, element)
+    return table[element] ~= nil
 end
 
+-- Split a string into a table
 RaidSkipper.Split = function(self, input, sep)
+    if input == nil then return {} end
     if sep == nil then
         sep = "%s"
     end
@@ -130,13 +221,24 @@ RaidSkipper.Split = function(self, input, sep)
     return t
 end
 
-RaidSkipper.GetArgs = function(args, pos)
-    if type(args) == "string" then
+-- Get arguments from a string or table
+RaidSkipper.GetArgs = function(args)
+    if type(args) == "table" then
+        return args
+    elseif type(args) == "string" then
         args = RaidSkipper:Split(args, " ")
+    else
+        return {}
     end
+end
 
-    if args[pos] ~= nil then
-        return args[pos]
+-- Get argument from a string or table
+RaidSkipper.GetArg = function(args, pos)
+    local a = RaidSkipper:GetArgs(args)
+    if a[pos] ~= nil then
+        return a[pos]
+    else
+        return nil
     end
 end
 
@@ -159,18 +261,19 @@ end
 -- QUEST AND ACHIEVEMENT FUNCTIONS
 
 local function IsQuestComplete(id)
-    if (id ~= nil) then
-        if type(id) ~= "number" then
-            id = tonumber(id)
-        end
-        return C_QuestLog.IsQuestFlaggedCompleted(id)
-    else
-        return nil
-    end
+    return id and C_QuestLog.IsQuestFlaggedCompleted(id)
+    -- if (id ~= nil) then
+    --     if type(id) ~= "number" then
+    --         id = tonumber(id)
+    --     end
+    --     return C_QuestLog.IsQuestFlaggedCompleted(id)
+    -- else
+    --     return nil
+    -- end
 end
 
 local function IsQuestInQuestLog(id)
-    return (C_QuestLog.GetLogIndexForQuestID(id) ~= nil)
+    return id and (C_QuestLog.GetLogIndexForQuestID(id) ~= nil)
 end
 
 local function IsAchievementComplete(id)
@@ -178,17 +281,36 @@ local function IsAchievementComplete(id)
         if type(id) ~= "number" then
             id = tonumber(id)
         end
-        local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(id)
+        -- id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic
+        local _, _, _, completed, _, _, _, _, _, _, _, _, _, _, _ = GetAchievementInfo(id)
         return completed
     else
         return nil
     end
 end
 
+local function GetQuestTitle(id)
+    if raid_skipper_db["quests"] == nil then
+        raid_skipper_db["quests"] = { }
+    end
+
+    if raid_skipper_db["quests"][id] then
+        return raid_skipper_db["quests"][id].title
+    else
+        if raid_skipper_db["requestedQuests"] == nil then
+            raid_skipper_db["requestedQuests"] = {}
+        end
+        table.insert(raid_skipper_db["requestedQuests"], id)
+        C_QuestLog.RequestLoadQuestByID(id)
+        return "Loading..."
+    end
+end
+
 -- CHAT DISPLAY FUNCTIONS
 
 local function ShowQuestProgress(id)
-    local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(id, 1, false)
+    -- text, objectiveType, finished, fulfilled, required
+    local _, _, _, fulfilled, required = GetQuestObjectiveInfo(id, 1, false)
     return fulfilled .. "/" .. required
 end
 
@@ -287,7 +409,7 @@ local function PrintHelp()
     RaidSkipper:Print("  /rs bfa --> Battle for Azeroth")
     RaidSkipper:Print("  /rs sl --> Shadowlands")
     RaidSkipper:Print("  /rs df --> Dragonflight")
-    RaidSkipper:Print("  /rs tww --> The War Within")
+    RaidSkipper:Print("  /rs ww --> War Within")
     RaidSkipper:Print("  /rs list --> List my chars status")
     RaidSkipper:Print("  /rs show --> Open RaidSkipper window")
 end
@@ -323,6 +445,12 @@ local function OnChangeZone()
     end
 end
 
+local function OnRaidInstanceWelcome()
+    RaidSkipper:Debug("OnRaidInstanceWelcome")
+    local instanceID = select(8, GetInstanceInfo())
+    ShowRaidInstanceById(instanceID)
+end
+
 local function GetQuestStatusFromGame(questId)
     local questComplete, inLog = IsQuestComplete(questId), IsQuestInQuestLog(questId)
     local status, statusText = "", ""
@@ -331,6 +459,13 @@ local function GetQuestStatusFromGame(questId)
     elseif inLog then
         status = IN_PROGRESS
         
+        local numQuestObjectives = C_QuestLog.GetNumQuestObjectives(questId)
+        local objectives = {}
+        for i = 1, numQuestObjectives do
+            local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, i, false)
+            table.insert(objectives, RaidSkipper.TextColor(IN_PROGRESS, " " .. text))
+            -- statusText = fulfilled .. "/" .. required
+        end
         local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, 1, false)
         statusText = fulfilled .. "/" .. required
 
@@ -369,8 +504,9 @@ local function GetAchievementStatusFromGame(achievementId)
     end
 end
 
-local function SaveCharacterData()
-    RaidSkipper:Debug("SaveCharacterData")
+-- Save the current character's raid skip status
+local function SaveCurrentCharacterData()
+    RaidSkipper:Debug("SaveCurrentCharacterData")
 
     local playerName = UnitName("player");
     local class, classFilename, _ = UnitClass(playerName);
@@ -380,43 +516,66 @@ local function SaveCharacterData()
     local level = UnitLevel("player")
     local race, raceFilename = UnitRace("player")
 
-    raid_skipper_db[playerRealm] = {
-        ["version"] = 120,
+    RaidSkipper.CurrentPlayer = {
+        ["version"] = RaidSkipper.DBVersion,
         ["playerName"] = playerName,
         ["realmName"] = realmName,
+        ["playerRealm"] = playerRealm,
         ["class"] = class,
         ["classFilename"] = classFilename,
         ["color"] = classColor,
         ["level"] = level,
         ["race"] = race,
         ["raceFilename"] = raceFilename,
-        ["quests"] = { },
-        ["achievements"] = { }
+        ["quests"] = {}
     }
 
+    -- Achievement statuses
+    if raid_skipper_db["accountWideData"] == nil then
+        raid_skipper_db["accountWideData"] = {}
+    end
+    if raid_skipper_db["accountWideData"]["achievements"] == nil then
+        raid_skipper_db["accountWideData"]["achievements"] = {}
+    end
+    for key, achievementId in ipairs(RaidSkipper.accountWideData.achievements) do
+        if raid_skipper_db["accountWideData"]["achievements"][achievementId] == nil then
+            raid_skipper_db["accountWideData"]["achievements"][achievementId] = INCOMPLETE
+        end
+        local achievementStatus = GetAchievementStatusFromGame(achievementId)
+        raid_skipper_db["accountWideData"]["achievements"][achievementId] = achievementStatus
+    end
+
+    -- Quest statuses
     for name, expansion in ipairs(RaidSkipper.raid_skip_quests) do
         for key, raid in ipairs(expansion.raids) do
             -- Exception raids: Battle of Dazar'alor, Siege of Orgrimmar
-            if raid.instanceId == 2070 or raid.instanceId == 1136 then                
-                raid_skipper_db[playerRealm]["achievements"][raid.achievementId] = {
-                    ["status"] = GetAchievementStatusFromGame(raid.achievementId)
-                }
-            else
+            -- if raid.instanceId == 2070 or raid.instanceId == 1136 then
+            --     RaidSkipper.CurrentPlayer["achievements"] = {
+            --         [raid.achievementId] = GetAchievementStatusFromGame(raid.achievementId)
+            --     }
+            --     RaidSkipper.CurrentPlayer["achievements"][raid.achievementId] = {
+            --         ["status"] = GetAchievementStatusFromGame(raid.achievementId)
+            --     }
+            -- else
                 -- Mythic
                 if raid.mythicId then
-                    raid_skipper_db[playerRealm]["quests"][raid.mythicId] = GetQuestStatusFromGame(raid.mythicId)
+                    -- GetQuestTitle(raid.mythicId)
+                    RaidSkipper.CurrentPlayer["quests"][raid.mythicId] = GetQuestStatusFromGame(raid.mythicId)
                 end
                 -- Heroic
                 if raid.heroicId then
-                    raid_skipper_db[playerRealm]["quests"][raid.heroicId] = GetQuestStatusFromGame(raid.heroicId)
+                    -- GetQuestTitle(raid.heroicId)
+                    RaidSkipper.CurrentPlayer["quests"][raid.heroicId] = GetQuestStatusFromGame(raid.heroicId)
                 end
                 -- Normal
                 if raid.normalId then
-                    raid_skipper_db[playerRealm]["quests"][raid.normalId] = GetQuestStatusFromGame(raid.normalId)
+                    -- GetQuestTitle(raid.normalId)
+                    RaidSkipper.CurrentPlayer["quests"][raid.normalId] = GetQuestStatusFromGame(raid.normalId)
                 end
-            end
+            -- end
         end
     end
+    DB.saveCharacterData(playerRealm, RaidSkipper.CurrentPlayer)
 end
 
 -- UI -------------------------------------------------------------------------
@@ -481,7 +640,7 @@ RaidSkipper.CharacterSelect_Menu = function(frame, level, menuList)
     -- info.text, info.arg1, info.arg2, info.checked = "All", "all", nil, false
     -- UIDropDownMenu_AddButton(info)
 
-    for key, character in pairs(raid_skipper_db) do
+    for key, character in pairs(DB.getCharacters()) do
         info.text, info.arg1, info.arg2, info.checked = key, key, nil, false
         UIDropDownMenu_AddButton(info)
     end
@@ -569,35 +728,40 @@ local function GetQuestStatusTextFromVars(questObject, text)
 end
 
 local function GetQuestStatusFromVars(characterKey, questId)
-    local questStatus = raid_skipper_db[characterKey]["quests"][questId]
+    local character = DB.getCharacterByPlayerRealm(characterKey)
+    local questStatus = character["quests"][questId]
     if questStatus then
         return questStatus
     end
 end
 
-local function GetAchievementStatusFromVars(characterKey, achievementId)
-    local achievementStatus = raid_skipper_db[characterKey]["achievements"][achievementId]
-    if achievementStatus then
-        return achievementStatus
-    end
-end
+-- local function GetAchievementStatusFromVars(characterKey, achievementId)
+--     local character = DB.getCharacterByPlayerRealm(characterKey)
+--     local achievementStatus = character["achievements"][achievementId]
+--     if achievementStatus then
+--         return achievementStatus
+--     end
+-- end
 
 -- Show the character's raid skip status
 RaidSkipper.UIShowCharacter = function(characterKey)
     RaidSkipper:Debug("UIShowCharacter")
 
-    local character = raid_skipper_db[characterKey]
+    local character = DB.getCharacterByPlayerRealm(characterKey)
+
     local characterNameDisplay = characterKey
     if character.classFilename then
         characterNameDisplay = "\124c" .. GetClassColor(character.classFilename) .. characterKey .. "\124r"
     end
     local blob = characterNameDisplay  .. "\n"
 
-    if character.version < 120 then
+    if character.version < RaidSkipper.DBVersion then
         blob = blob .. "Character data is out of date. Please log in with this character to update the data."
         RaidSkipper.frame.textBlob:SetText(blob)
         return
     end
+
+    local accountWideAchievements = raid_skipper_db["accountWideData"]["achievements"]
 
     for name, expansion in ipairs(RaidSkipper.raid_skip_quests) do
         -- local expansionInfo = GetExpansionDisplayInfo(expansion.expansionId)
@@ -612,21 +776,17 @@ RaidSkipper.UIShowCharacter = function(characterKey)
         for key, raid in ipairs(expansion.raids) do
             local raidLine = "        " .. GetRealZoneText(raid.instanceId) .. ": "
             -- Check SOO and BoD
-            if raid.instanceId == 2070 or raid.instanceId == 1136 then
-                local achievementStatus = raid_skipper_db[characterKey]["achievements"][raid.achievementId].status
-                if achievementStatus == COMPLETE then
-                    raidLine = raidLine .. RaidSkipper.TextColor(COMPLETE, COMPLETE)
-                else
-                    raidLine = raidLine .. RaidSkipper.TextColor(INCOMPLETE, INCOMPLETE)
-                end
+            if raid.achievementId ~= nil then
+                local achievementStatus = accountWideAchievements[raid.achievementId]
+                raidLine = raidLine .. RaidSkipper.TextColor(achievementStatus, achievementStatus)
             else
-                local mythicQuest = raid_skipper_db[characterKey]["quests"][raid.mythicId]
+                local mythicQuest = character["quests"][raid.mythicId]
                 raidLine = raidLine .. GetQuestStatusTextFromVars(mythicQuest, PLAYER_DIFFICULTY6)
                 if mythicQuest.status ~= COMPLETE then
-                    local heroicQuest = raid_skipper_db[characterKey]["quests"][raid.heroicId]
+                    local heroicQuest = character["quests"][raid.heroicId]
                     raidLine = raidLine .. " " .. GetQuestStatusTextFromVars(heroicQuest, PLAYER_DIFFICULTY2)
                     if heroicQuest.status ~= COMPLETE then
-                        local normalQuest = raid_skipper_db[characterKey]["quests"][raid.normalId]
+                        local normalQuest = character["quests"][raid.normalId]
                         raidLine = raidLine .. " " .. GetQuestStatusTextFromVars(normalQuest, PLAYER_DIFFICULTY1)
                     end
                 end
@@ -663,8 +823,8 @@ RaidSkipper.UIShowExpansion = function(expansion)
             local heroicId = raid.heroicId
             local normalId = raid.normalId
             
-            for playerRealmKey, playerData in pairs(raid_skipper_db) do
-                if playerData.version == 120 and playerData["quests"] and type(playerData["quests"][mythicId]) ~= "boolean" then
+            for playerRealmKey, playerData in pairs(DB.getCharacters()) do
+                if playerData.version == RaidSkipper.DBVersion and playerData["quests"] and type(playerData["quests"][mythicId]) ~= "boolean" then
                     
                     -- RaidSkipper:Debug("type: " .. type(playerData["quests"][mythicId]))
                     -- RaidSkipper:Debug("playerRealmKey: " .. playerRealmKey)
@@ -711,51 +871,92 @@ function SlashHandler(args)
 
     local argsTable = RaidSkipper:Split(args, " ")
     local arg1 = argsTable[1]
+    local expansionAbbreviations = {
+        ["mop"] = EXPANSION_NAME4,
+        ["wod"] = EXPANSION_NAME5,
+        ["legion"] = EXPANSION_NAME6,
+        ["bfa"] = EXPANSION_NAME7,
+        ["sl"] = EXPANSION_NAME8,
+        ["df"] = EXPANSION_NAME9,
+        ["ww"] = EXPANSION_NAME10,
+    }
 
-    if arg1 then
-        arg1 = arg1:lower()
-        
-        if arg1 == "all" then
-            ShowExpansions()
-        elseif arg1 == "mop" then
-            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME4))
-        elseif arg1 == "wod" then
-            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME5))
-        elseif arg1 == "legion" then
-            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME6))
-        elseif arg1 == "bfa" then
-            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME7))
-        elseif arg1 == "sl" then
-            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME8))
-        elseif arg1 == "df" then
-            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME9))
-        elseif arg1 == "tww" then
-            ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME10))
-        elseif arg1 == "list" then
-            showMySkips()
-        elseif arg1 == "show" then
-            CreateWindow()
-        else
-            PrintHelp()
-        end
+    -- TODO: /rs help, /rs config should show a config and help window
+
+    if arg1 == nil or #argsTable == 0 then
+        ShowExpansions()
+    elseif arg1 and RaidSkipper.Contains(expansionAbbreviations, arg1:lower()) then
+        arg1 = ShowExpansion(GetExpansionDataFromName(expansionAbbreviations[arg1]))
+    elseif arg1 and arg1:lower() == "all" then
+        ShowExpansions()
+    elseif arg1 and arg1:lower() == "list" then
+        showMySkips()
+    elseif arg1 and arg1:lower() == "show" then
+        CreateWindow()
+    elseif arg1 and arg1:lower() == "help" then
+        PrintHelp()
     else
-        if InRaid() then
-            ShowCurrentRaid()
-        else
-            ShowExpansions()
-        end
+        ShowExpansions()
     end
+
+    -- if arg1 then
+    --     arg1 = arg1:lower()
+        
+    --     if arg1 == "all" then
+    --         ShowExpansions()
+    --     elseif arg1 == "mop" then
+    --         ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME4))
+    --     elseif arg1 == "wod" then
+    --         ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME5))
+    --     elseif arg1 == "legion" then
+    --         ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME6))
+    --     elseif arg1 == "bfa" then
+    --         ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME7))
+    --     elseif arg1 == "sl" then
+    --         ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME8))
+    --     elseif arg1 == "df" then
+    --         ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME9))
+    --     elseif arg1 == "tww" then
+    --         ShowExpansion(GetExpansionDataFromName(EXPANSION_NAME10))
+    --     elseif arg1 == "list" then
+    --         showMySkips()
+    --     elseif arg1 == "show" then
+    --         CreateWindow()
+    --     else
+    --         PrintHelp()
+    --     end
+    -- else
+    --     if InRaid() then
+    --         ShowCurrentRaid()
+    --     else
+    --         ShowExpansions()
+    --     end
+    -- end
 end
 
+-- Event Handler when user invokes /ic command
 function IsCompleteHandler(args)
     RaidSkipper:Debug("IsCompleteHandler")
     local argsTable = RaidSkipper:Split(args, " ")
 
     RaidSkipper:Print("--------------------")
     for key, arg in ipairs(argsTable) do   
+        
+        -- Check for quest
+        local questComplete = IsQuestComplete(arg)
+        if questComplete ~= nil then
+            if questComplete then
+                RaidSkipper:Print("Quest " .. arg .. " " .. RaidSkipper.TextColor(COMPLETE, COMPLETE))
+            else
+                RaidSkipper:Print("Quest " .. arg .. " " .. RaidSkipper.TextColor(INCOMPLETE, INCOMPLETE))
+            end
+        end
+        
+        -- Check for Achievement
+        
         -- Attempt to load quest data     
-        RaidSkipper.queryQuests[arg] = true
-        C_QuestLog.RequestLoadQuestByID(arg)
+        raid_skipper_db["requestedQuests"][arg] = true
+        -- C_QuestLog.RequestLoadQuestByID(arg)
         -- Result will be handled by QUEST_DATA_LOAD_RESULT event
 
         -- Check Achievement
@@ -775,7 +976,7 @@ end
 
 function IsAchievementCompleteHandler(args)
     RaidSkipper:Debug("IsAchievementCompleteHandler")
-    local arg1 = RaidSkipper.GetArgs(args, 1)
+    local arg1 = RaidSkipper.GetArg(args, 1)
 
     if arg1 then
         ShowAchievementInfo(arg1)
@@ -784,7 +985,7 @@ end
 
 function IsQuestCompleteHandler(args)
     RaidSkipper:Debug("IsQuestCompleteHandler")
-    local arg1 = RaidSkipper.GetArgs(args, 1)
+    local arg1 = RaidSkipper.GetArg(args, 1)
 
     if arg1 then
         if IsQuestComplete(arg1) then
@@ -799,37 +1000,52 @@ end
 
 local frame, events = CreateFrame("Frame"), {}
 
-function events:ZONE_CHANGED_NEW_AREA()
-    OnChangeZone()
+function events:RAID_INSTANCE_WELCOME()
+    OnRaidInstanceWelcome()
 end
+
+-- function events:ZONE_CHANGED_NEW_AREA()
+--     OnChangeZone()
+-- end
 
 function events:PLAYER_LOGIN()
-    SaveCharacterData()
+    DB.init()
+    SaveCurrentCharacterData()
 end
 
+-- Async event when requested quest data is returned
 function events:QUEST_DATA_LOAD_RESULT(...)
-    RaidSkipper:Debug("QUEST_DATA_LOAD_RESULT")
-    local questID, success = ...
-    if RaidSkipper:Contains(RaidSkipper.queryQuests, questID) then
-        table.remove(RaidSkipper.queryQuests, questID)
+    -- RaidSkipper:Debug("QUEST_DATA_LOAD_RESULT: " .. tostring(...))
+    local questId, success = ...
 
-        local completed = C_QuestLog.IsQuestFlaggedCompleted(questID)
-        local name = ""
-        if success then
-            name = C_QuestLog.GetTitleForQuestID(questID)
-            if name == nil then
-                name = "Unknown quest"
-            end
+    -- if RaidSkipper.Contains(raid_skipper_db["requestedQuests"], questId) then
+    if raid_skipper_db["requestedQuests"][questId] ~= nil then
+        -- table.remove(raid_skipper_db["requestedQuests"], questId)
+        raid_skipper_db["requestedQuests"][questId] = nil
+
+        -- RaidSkipper:Debug("requestedQuests: " .. tostring(#raid_skipper_db["requestedQuests"]))
+        -- RaidSkipper:Debug("questId: " .. type(raid_skipper_db["requestedQuests"][1]))
+        -- RaidSkipper:Debug("questId: " .. type(questId))
+        -- RaidSkipper:Debug("questId: " .. tostring(RaidSkipper.Contains(raid_skipper_db["requestedQuests"], questId)))
+    
+        -- local questTitle = GetQuestTitle(questId)
+        -- RaidSkipper:Debug("questId: " .. questId)
+        -- RaidSkipper:Debug("questTitle: " .. tostring(questTitle))
+
+        if questTitle ~= nil then
+            raid_skipper_db["quests"][questId] = {
+                ["title"] = name
+            }
         end
 
-        RaidSkipper:Print("--------------------")
-        if completed then
-            RaidSkipper:Print("Quest Id: " .. questID .. " " .. RaidSkipper.TextColor(COMPLETE, COMPLETE) .. " " .. name)
-        else
-            RaidSkipper:Print("Quest Id: " .. questID .. " " .. RaidSkipper.TextColor(INCOMPLETE, INCOMPLETE) .. " " .. name)
-        end
-        RaidSkipper:Print("--------------------")
-    end    
+        -- RaidSkipper:Debug("--------------------")
+        -- if completed then
+        --     RaidSkipper:Debug("Quest Id: " .. questId .. " " .. RaidSkipper.TextColor(COMPLETE, COMPLETE) .. " " .. name)
+        -- else
+        --     RaidSkipper:Debug("Quest Id: " .. questId .. " " .. RaidSkipper.TextColor(INCOMPLETE, INCOMPLETE) .. " " .. name)
+        -- end
+        -- RaidSkipper:Debug("--------------------")
+    end   
 end
 
 frame:SetScript("OnEvent", function(self, event, ...)
