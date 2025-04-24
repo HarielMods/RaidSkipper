@@ -1,12 +1,10 @@
 # Raid Skipper
 
----
-# HUGE NEWS!! Raid skips are now account wide! Reported by [MrGM](https://x.com/MrGMYT/status/1849049750227550234) and [Icy Veins](https://www.icy-veins.com/wow/news/account-wide-raid-skips/). I will see how this affects RaidSkipper's behavior and update soon.
----
-
 Show which quests or achievements have been completed that allow the player to 
 skip content in raids. If you run legacy raids for mounts and xmog this addon 
 is for you!
+
+Raid skips are now account wide. Reported by [MrGM](https://x.com/MrGMYT/status/1849049750227550234) and [Icy Veins](https://www.icy-veins.com/wow/news/account-wide-raid-skips/).
 
 This guide was used as reference:  
 https://www.wowhead.com/guides/raid-quests-to-skip-bosses
@@ -25,18 +23,18 @@ Blue: Quest is in progress
 
 **Show only one expansion:**
 
-* /rs tww
+* /rs ww
 * /rs df
 * /rs sl
 * /rs bfa
-* /rs legion
+* /rs leg
 * /rs wod
 
-**Show all chars status**
-
-* /rs list
-
 ## Raids Currently Supported
+
+#### The War Within
+  * Liberation of Undermine
+  * Nerub-ar Palace
 
 #### Dragonflight
   * Amirdrassil, the Dream's Hope
@@ -66,11 +64,7 @@ Blue: Quest is in progress
 
 ![Example Screenshot](screenshot1.png?raw=true "Example Screenshot")
 
-_Korthia functions removed in favor of the [Korthia Checklist WeakAura](https://wago.io/cyRj6ikQz)_
-
 ## TO DO
 
-* Remove Ace library. This addon is so small and Ace is really not needed. 
-* Improve multi-character data.
 * Add a GUI to show quest skip progress for all characters.
 * Update logo and marketing

@@ -1,5 +1,9 @@
 # Raid Skipper
 
+### 1.1.0
+* Massivley simplify addon due to the function "IsQuestFlaggedCompletedOnAccount"
+* Added Nerub-ar Palace and Liberation of Undermine
+
 ### 1.0.20
 * Fix typo in readme
 * Add to dos in readme
