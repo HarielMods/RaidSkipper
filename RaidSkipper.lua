@@ -312,7 +312,7 @@ end
 -- QUEST AND ACHIEVEMENT FUNCTIONS
 
 local function IsQuestComplete(id)
-    return id and IsQuestFlaggedCompleted(id)
+    return id and IsQuestFlaggedCompletedOnAccount(id)
 end
 
 local function IsQuestInQuestLog(id)
@@ -461,142 +461,6 @@ end
 local function ShowCurrentRaid() 
     local instanceID = select(8, GetInstanceInfo())
     ShowRaidInstanceById(instanceID)
-end
-
--- Event Hooks ----------------------------------------------------------------
-
--- Print skip quest status of current raid when entering a raid instance
-local function OnRaidInstanceWelcome()
-    RaidSkipper:Debug("OnRaidInstanceWelcome")
-    local instanceID = select(8, GetInstanceInfo())
-    ShowRaidInstanceById(instanceID)
-end
-
-local function GetQuestStatusFromGame(questId)
-    local questComplete, inLog = IsQuestComplete(questId), IsQuestInQuestLog(questId)
-    local status, statusText = "", ""
-    if questComplete then
-        status = COMPLETE
-    elseif inLog then
-        status = IN_PROGRESS
-        
-        local numQuestObjectives = GetNumQuestObjectives(questId)
-        local objectives = {}
-        for i = 1, numQuestObjectives do
-            local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, i, false)
-            table.insert(objectives, RaidSkipper.TextColor(IN_PROGRESS, " " .. text))
-            -- statusText = fulfilled .. "/" .. required
-        end
-        local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, 1, false)
-        statusText = fulfilled .. "/" .. required
-
-        -- Get in progress status
-        -- local numQuestObjectives = GetNumQuestObjectives(questId)
-        -- if numQuestObjectives > 0 then
-        --     local objectives = {}
-        --     for i = 1, numQuestObjectives do
-        --         local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, i, false)
-        --         table.insert(objectives, RaidSkipper.TextColor(IN_PROGRESS, " " .. text))
-        --     end
-        --     if objectives == nil or #objectives == 0 then
-        --         statusText = RaidSkipper.TextColor(IN_PROGRESS, IN_PROGRESS)
-        --     else
-        --         statusText = table.concat(objectives, "\n")
-        --     end
-        -- else
-        --     statusText = RaidSkipper.TextColor(IN_PROGRESS, difficulty)
-        -- end
-    else
-        status = INCOMPLETE
-    end
-
-    return {
-        ["status"] = status,
-        ["statusText"] = statusText
-    }
-end
-
-local function GetAchievementStatusFromGame(achievementId)
-    if (IsAchievementComplete(achievementId)) then
-        -- Player account has completed achievement
-        return COMPLETE
-    else
-        return INCOMPLETE
-    end
-end
-
--- Save the current character's raid skip status
-local function SaveCurrentCharacterData()
-    RaidSkipper:Debug("SaveCurrentCharacterData")
-
-    local playerName = UnitName("player");
-    local class, classFilename, _ = UnitClass(playerName);
-    local classColor = GetClassColor(classfilename)
-    local realmName = GetRealmName();
-    local playerRealm = GetPlayerRealmName(playerName, realmName)
-    local level = UnitLevel("player")
-    local race, raceFilename = UnitRace("player")
-
-    RaidSkipper.CurrentPlayer = {
-        ["version"] = RaidSkipper.DBVersion,
-        ["playerName"] = playerName,
-        ["realmName"] = realmName,
-        ["playerRealm"] = playerRealm,
-        ["class"] = class,
-        ["classFilename"] = classFilename,
-        ["color"] = classColor,
-        ["level"] = level,
-        ["race"] = race,
-        ["raceFilename"] = raceFilename,
-        ["quests"] = {}
-    }
-
-    -- Achievement statuses
-    if raid_skipper_db["accountWideData"] == nil then
-        raid_skipper_db["accountWideData"] = {}
-    end
-    if raid_skipper_db["accountWideData"]["achievements"] == nil then
-        raid_skipper_db["accountWideData"]["achievements"] = {}
-    end
-    for key, achievementId in ipairs(RaidSkipper.accountWideData.achievements) do
-        if raid_skipper_db["accountWideData"]["achievements"][achievementId] == nil then
-            raid_skipper_db["accountWideData"]["achievements"][achievementId] = INCOMPLETE
-        end
-        local achievementStatus = GetAchievementStatusFromGame(achievementId)
-        raid_skipper_db["accountWideData"]["achievements"][achievementId] = achievementStatus
-    end
-
-    -- Quest statuses
-    for name, expansion in ipairs(RaidSkipper.raid_skip_quests) do
-        for key, raid in ipairs(expansion.raids) do
-            -- Exception raids: Battle of Dazar'alor, Siege of Orgrimmar
-            -- if raid.instanceId == 2070 or raid.instanceId == 1136 then
-            --     RaidSkipper.CurrentPlayer["achievements"] = {
-            --         [raid.achievementId] = GetAchievementStatusFromGame(raid.achievementId)
-            --     }
-            --     RaidSkipper.CurrentPlayer["achievements"][raid.achievementId] = {
-            --         ["status"] = GetAchievementStatusFromGame(raid.achievementId)
-            --     }
-            -- else
-                -- Mythic
-                if raid.mythicId then
-                    -- GetQuestTitle(raid.mythicId)
-                    RaidSkipper.CurrentPlayer["quests"][raid.mythicId] = GetQuestStatusFromGame(raid.mythicId)
-                end
-                -- Heroic
-                if raid.heroicId then
-                    -- GetQuestTitle(raid.heroicId)
-                    RaidSkipper.CurrentPlayer["quests"][raid.heroicId] = GetQuestStatusFromGame(raid.heroicId)
-                end
-                -- Normal
-                if raid.normalId then
-                    -- GetQuestTitle(raid.normalId)
-                    RaidSkipper.CurrentPlayer["quests"][raid.normalId] = GetQuestStatusFromGame(raid.normalId)
-                end
-            -- end
-        end
-    end
-    DB.saveCharacterData(playerRealm, RaidSkipper.CurrentPlayer)
 end
 
 -- UI -------------------------------------------------------------------------
@@ -943,7 +807,105 @@ local function SimpleChatPrint()
     end
 end
 
+local function SimpleChatPrintSingleRaid(raidId)
+    local completedColorText = RaidSkipper.TextColor(COMPLETE, COMPLETE)
+    local incompleteColorText = RaidSkipper.TextColor(INCOMPLETE, INCOMPLETE)
+    local inprogressColorText = RaidSkipper.TextColor(IN_PROGRESS, IN_PROGRESS)
+
+    for expansion, expansionData in ipairs(RaidSkipper.raid_skip_quests) do
+        for raid, raidData in ipairs(expansionData.raids) do
+            if raidData.instanceId == raidId then
+                RaidSkipper:Print("  " .. GetRealZoneText(raidData.instanceId))
+                if raidData.achievementId then
+                    -- id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic
+                    local _, name, _, completed, _, _, _, _, _, _, _, _, _, _, _ = GetAchievementInfo(raidData.achievementId)
+                    RaidSkipper:Print("    " .. name .. ": " .. (completed and completedColorText or incompleteColorText))
+                end
+
+                local completed = false
+                if raidData.mythicId then
+                    completed = IsQuestFlaggedCompletedOnAccount(raidData.mythicId)
+                    RaidSkipper:Print("    " .. PLAYER_DIFFICULTY6 .. ": " .. (completed and completedColorText or incompleteColorText))
+                end
+                if not completed and raidData.heroicId then
+                    completed = IsQuestFlaggedCompletedOnAccount(raidData.heroicId)
+                    RaidSkipper:Print("    " .. PLAYER_DIFFICULTY2 .. ": " .. (completed and completedColorText or incompleteColorText))
+                end
+                if not completed and raidData.normalId then
+                    completed = IsQuestFlaggedCompletedOnAccount(raidData.normalId)
+                    RaidSkipper:Print("    " .. PLAYER_DIFFICULTY1 .. ": " .. (completed and completedColorText or incompleteColorText))
+                end
+            end
+        end
+    end
+end
+
 -- ----------------------------------------------------------------------------
+
+-- Event Hooks ----------------------------------------------------------------
+
+-- Print skip quest status of current raid when entering a raid instance
+-- TODO: This isn't working right now. Come back to it later.
+local function OnRaidInstanceWelcome()
+    RaidSkipper:Debug("OnRaidInstanceWelcome")
+    local instanceID = select(8, GetInstanceInfo())
+    -- ShowRaidInstanceById(instanceID)
+    SimpleChatPrintSingleRaid(instanceID)
+end
+
+local function GetQuestStatusFromGame(questId)
+    local questComplete, inLog = IsQuestComplete(questId), IsQuestInQuestLog(questId)
+    local status, statusText = "", ""
+    if questComplete then
+        status = COMPLETE
+    elseif inLog then
+        status = IN_PROGRESS
+        
+        local numQuestObjectives = GetNumQuestObjectives(questId)
+        local objectives = {}
+        for i = 1, numQuestObjectives do
+            local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, i, false)
+            table.insert(objectives, RaidSkipper.TextColor(IN_PROGRESS, " " .. text))
+            -- statusText = fulfilled .. "/" .. required
+        end
+        local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, 1, false)
+        statusText = fulfilled .. "/" .. required
+
+        -- Get in progress status
+        -- local numQuestObjectives = GetNumQuestObjectives(questId)
+        -- if numQuestObjectives > 0 then
+        --     local objectives = {}
+        --     for i = 1, numQuestObjectives do
+        --         local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questId, i, false)
+        --         table.insert(objectives, RaidSkipper.TextColor(IN_PROGRESS, " " .. text))
+        --     end
+        --     if objectives == nil or #objectives == 0 then
+        --         statusText = RaidSkipper.TextColor(IN_PROGRESS, IN_PROGRESS)
+        --     else
+        --         statusText = table.concat(objectives, "\n")
+        --     end
+        -- else
+        --     statusText = RaidSkipper.TextColor(IN_PROGRESS, difficulty)
+        -- end
+    else
+        status = INCOMPLETE
+    end
+
+    return {
+        ["status"] = status,
+        ["statusText"] = statusText
+    }
+end
+
+local function GetAchievementStatusFromGame(achievementId)
+    if (IsAchievementComplete(achievementId)) then
+        -- Player account has completed achievement
+        return COMPLETE
+    else
+        return INCOMPLETE
+    end
+end
+
 
 
 local function GetExpansionDataFromName(expansionName)
@@ -1051,19 +1013,9 @@ end
 
 local frame, events = CreateFrame("Frame"), {}
 
-function events:RAID_INSTANCE_WELCOME()
-    OnRaidInstanceWelcome()
-end
-
-function events:PLAYER_LOGIN()
-    -- No longer needed
-    DB.init()
-    SaveCurrentCharacterData()
-end
-
--- Async event when requested quest data is returned
-function events:QUEST_DATA_LOAD_RESULT(...)
-end
+-- function events:RAID_INSTANCE_WELCOME()
+--     OnRaidInstanceWelcome()
+-- end
 
 frame:SetScript("OnEvent", function(self, event, ...)
     events[event](self, ...)
