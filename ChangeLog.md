@@ -1,5 +1,10 @@
 # Raid Skipper
 
+### 1.1.1
+* Change game version to 11.1.5
+* Reduce unused code causing errors.
+* Temporarily remove the instance welcome message. It's not working and requires investigation.
+
 ### 1.1.0
 * Massivley simplify addon due to the function "IsQuestFlaggedCompletedOnAccount"
 * Added Nerub-ar Palace and Liberation of Undermine

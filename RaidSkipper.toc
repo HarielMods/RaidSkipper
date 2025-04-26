@@ -3,7 +3,7 @@
 ## Notes: Show which raid content player can skip
 ## Author: Hariel
 ## SavedVariables: raid_skipper_db
-## Version: 1.1.0
+## Version: 1.1.1
 ## X-Curse-Project-ID: 520345
 ## X-WoWI-ID: 26312
 ## X-Wago-ID: XrNkD46a
