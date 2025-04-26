@@ -1,5 +1,5 @@
 ## Title: Raid Skipper
-## Interface: 110100
+## Interface: 110105
 ## Notes: Show which raid content player can skip
 ## Author: Hariel
 ## SavedVariables: raid_skipper_db
