@@ -438,6 +438,9 @@ local function PrintHelp()
     RaidSkipper:Print("  /rs sl --> Shadowlands")
     RaidSkipper:Print("  /rs df --> Dragonflight")
     RaidSkipper:Print("  /rs ww --> War Within")
+    RaidSkipper:Print("  /rs tww --> War Within")
+    RaidSkipper:Print("  /rs midnight --> Midnight")
+    RaidSkipper:Print("  /rs mn --> Midnight")
     RaidSkipper:Print("  /rs list --> List my chars status")
     RaidSkipper:Print("  /rs show --> Open RaidSkipper window")
 end
@@ -924,13 +927,22 @@ local commands = {
 
 local expansionAbbreviations = {
     ["mop"] = EXPANSION_NAME4,
+    ["mists"] = EXPANSION_NAME4,
     ["wod"] = EXPANSION_NAME5,
+    ["warlords"] = EXPANSION_NAME5,
     ["legion"] = EXPANSION_NAME6,
     ["leg"] = EXPANSION_NAME6,
     ["bfa"] = EXPANSION_NAME7,
+    ["battle"] = EXPANSION_NAME7,
     ["sl"] = EXPANSION_NAME8,
+    ["shadowlands"] = EXPANSION_NAME8,
     ["df"] = EXPANSION_NAME9,
+    ["dragonflight"] = EXPANSION_NAME9,
     ["ww"] = EXPANSION_NAME10,
+    ["warwithin"] = EXPANSION_NAME10,
+    ["tww"] = EXPANSION_NAME10,
+    ["midnight"] = EXPANSION_NAME11,
+    ["mn"] = EXPANSION_NAME11
 }
 
 function SlashHandler(args)

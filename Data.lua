@@ -83,5 +83,17 @@ RaidSkipper.raid_skip_quests = {
             -- Liberation of Undermine: Splitting Pairs
             { instanceId = 2769, mythicId = 89353, heroicId = 89352, normalId = 89351 }
         }
+    },
+    {
+        name = EXPANSION_NAME11,
+        expansionId = LE_EXPANSION_MIDNIGHT,
+        raids = {
+            -- The Dreamrift
+            { instanceId = 0, mythicId = 0, heroicId = 0, normalId = 0 },
+            -- The Voidspire
+            { instanceId = 0, mythicId = 0, heroicId = 0, normalId = 0 },
+            -- March on Quel'Danas
+            { instanceId = 0, mythicId = 0, heroicId = 0, normalId = 0 },
+        }
     }
 }
