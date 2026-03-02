@@ -1,9 +1,9 @@
 ## Title: Raid Skipper
-## Interface: 110105
+## Interface: 120001
 ## Notes: Show which raid content player can skip
 ## Author: Hariel
 ## SavedVariables: raid_skipper_db
-## Version: 1.1.1
+## Version: 1.2.0
 ## X-Curse-Project-ID: 520345
 ## X-WoWI-ID: 26312
 ## X-Wago-ID: XrNkD46a
