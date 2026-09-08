@@ -1,12 +1,14 @@
-## Title: Raid Skipper
-## Interface: 120001
-## Notes: Show which raid content player can skip
+## Title: Raid Skip Tracker
+## Interface: 120100
+## Notes: Tracks account-wide raid skip quests and achievements by expansion.
 ## Author: Hariel
-## SavedVariables: raid_skipper_db
-## Version: 1.2.0
+## SavedVariables: RaidSkipTrackerDB
+## Version: 2.0.0
 ## X-Curse-Project-ID: 520345
 ## X-WoWI-ID: 26312
 ## X-Wago-ID: XrNkD46a
+## Category: Raid
 
-Data.lua
-RaidSkipper.lua
+Locale\Locale.xml
+
+Core.lua
