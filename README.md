@@ -1,36 +1,21 @@
-# Raid Skipper
+# Raid Skip Tracker
 
-Show which quests or achievements have been completed that allow the player to 
-skip content in raids. If you run legacy raids for mounts and xmog this addon 
-is for you!
+Show which quests or achievements have been completed that allow the player to skip content in raids. If you run legacy raids for mounts and xmog this addon is for you!
 
-Raid skips are now account wide. Reported by [MrGM](https://x.com/MrGMYT/status/1849049750227550234) and [Icy Veins](https://www.icy-veins.com/wow/news/account-wide-raid-skips/).
+This guide was used as reference: [Wowhead: Skipping quests in raids](https://www.wowhead.com/guides/raid-quests-to-skip-bosses)
 
-This guide was used as reference:  
-https://www.wowhead.com/guides/raid-quests-to-skip-bosses
-
-## Color Code
-
-Red: Quest is not completed  
-Green: Quest is completed  
-Blue: Quest is in progress  
+When this addon started, each character had to track their own raid skips. Raid skips are now account wide. 
 
 ## Slash Commands
 
-* /raidskipper
-* /rs
-* /rs help
-
-**Show only one expansion:**
-
-* /rs ww
-* /rs df
-* /rs sl
-* /rs bfa
-* /rs leg
-* /rs wod
+* /raidskip
+* /rst
 
 ## Raids Currently Supported
+
+### Midnight
+  * The Venomous Abyss
+  * The Voidespire
 
 #### The War Within
   * Liberation of Undermine
@@ -62,9 +47,6 @@ Blue: Quest is in progress
   * Hellfire Citadel Lower
   * Blackrock Foundary
 
-![Example Screenshot](screenshot1.png?raw=true "Example Screenshot")
+### Mists of Pandaria
+  * Siege of Orgrimmar
 
-## TO DO
-
-* Add a GUI to show quest skip progress for all characters.
-* Update logo and marketing
