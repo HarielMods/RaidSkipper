@@ -1,4 +1,10 @@
-# Raid Skipper
+# Raid Skip Tracker
+
+### 2.0.0
+* This update brings a major update by giving players a nicer looking UI! 
+* Updating the name from Raid Skipper to Raid Skip Tracker.
+* Update game version to 12.1.0.
+* Please contact [Hariel](mailto:hariel@optimus-luminarium.net) to help with localization.
 
 ### 1.1.1
 * Change game version to 11.1.5
